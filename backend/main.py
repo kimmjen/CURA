@@ -5,14 +5,12 @@ from api.routers import collections, videos, upload
 from core.database import init_db
 import os
 
+from core.config import settings
+
 app = FastAPI(title="CURA API", version="0.1.0")
 
 # CORS Setup
-origins = [
-    "http://localhost:5173", # Vite default
-    "http://localhost:3000",
-    "*", # Allow all for development convenience, tighten for prod
-]
+origins = settings.CORS_ORIGINS
 
 app.add_middleware(
     CORSMiddleware,

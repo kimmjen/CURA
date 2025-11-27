@@ -1,22 +1,17 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from supabase import create_client, Client
-import os
 import uuid
-from dotenv import load_dotenv
-from pathlib import Path
-
-# Load .env from project root
-env_path = Path(__file__).resolve().parents[3] / '.env'
-load_dotenv(dotenv_path=env_path)
+import os
+from core.config import settings
 
 router = APIRouter(
     prefix="/upload",
-    tags=["upload"]
+    tags=["Upload"]
 )
 
 # Supabase Setup
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_KEY")
+SUPABASE_URL = settings.SUPABASE_URL
+SUPABASE_KEY = settings.SUPABASE_KEY_FINAL
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     raise RuntimeError("SUPABASE_URL and SUPABASE_KEY (or SUPABASE_SERVICE_KEY) must be set in .env")

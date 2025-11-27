@@ -9,6 +9,7 @@ NC='\033[0m' # No Color
 echo -e "${BLUE}╔═══════════════════════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║        🚀 CURA Deployment Script (Example)                ║${NC}"
 echo -e "${BLUE}╚═══════════════════════════════════════════════════════════╝${NC}"
+cd "$(dirname "$0")/.."
 
 # Check arguments (allow overriding, but set defaults)
 DOCKER_USERNAME=${1:-"your_docker_username"} # Default docker user if not provided
@@ -34,13 +35,13 @@ echo -e "${BLUE}🔨 Building and Pushing Docker Images...${NC}"
 
 # Frontend
 echo "  - Building Frontend..."
-docker build -t ${DOCKER_USERNAME}/cura-frontend:latest ./frontend
+docker build --platform linux/amd64 -t ${DOCKER_USERNAME}/cura-frontend:latest ./frontend
 echo "  - Pushing Frontend..."
 docker push ${DOCKER_USERNAME}/cura-frontend:latest
 
 # Backend
 echo "  - Building Backend..."
-docker build -t ${DOCKER_USERNAME}/cura-backend:latest ./backend
+docker build --platform linux/amd64 -t ${DOCKER_USERNAME}/cura-backend:latest ./backend
 echo "  - Pushing Backend..."
 docker push ${DOCKER_USERNAME}/cura-backend:latest
 

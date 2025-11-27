@@ -1,14 +1,18 @@
 import os
 import httpx
 import re
-from typing import Dict, Any, Optional
-from datetime import datetime
+from typing import Dict, Any, Optional, List
+from datetime import datetime, timedelta
 from fastapi import HTTPException
+from core.config import settings
+
+YOUTUBE_API_KEY = settings.YOUTUBE_API_KEY
+YOUTUBE_API_URL = "https://www.googleapis.com/youtube/v3/videos"
 
 class VideoService:
     def __init__(self):
-        self.api_key = os.environ.get("YOUTUBE_API_KEY")
-        self.base_url = "https://www.googleapis.com/youtube/v3/videos"
+        # These are now global constants, no need for instance variables
+        pass
 
     def extract_video_id(self, url: str) -> Optional[str]:
         """
@@ -34,18 +38,18 @@ class VideoService:
         if not video_id:
             raise HTTPException(status_code=400, detail="Invalid YouTube URL")
 
-        if not self.api_key:
+        if not YOUTUBE_API_KEY:
             # Fallback for development if no API key is set
             print("WARNING: YOUTUBE_API_KEY not set. Returning mock data.")
             return self._get_mock_data(video_id)
 
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                self.base_url,
+                YOUTUBE_API_URL,
                 params={
                     "part": "snippet,contentDetails",
                     "id": video_id,
-                    "key": self.api_key
+                    "key": YOUTUBE_API_KEY
                 }
             )
             
@@ -72,7 +76,7 @@ class VideoService:
         """
         Resolves a YouTube Channel URL (handle or custom URL) to a Channel ID.
         """
-        if not self.api_key: return "mock_channel_id"
+        if not YOUTUBE_API_KEY: return "mock_channel_id"
 
         # Extract handle or username
         handle_match = re.search(r"youtube\.com\/@([a-zA-Z0-9_.-]+)", url)
@@ -81,7 +85,7 @@ class VideoService:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     "https://www.googleapis.com/youtube/v3/channels",
-                    params={"part": "id", "forHandle": f"@{handle}", "key": self.api_key}
+                    params={"part": "id", "forHandle": f"@{handle}", "key": YOUTUBE_API_KEY}
                 )
                 if response.status_code == 200:
                     items = response.json().get("items")
@@ -98,7 +102,7 @@ class VideoService:
         """
         Fetches channel details including title, thumbnail, and video count.
         """
-        if not self.api_key:
+        if not YOUTUBE_API_KEY:
             return {
                 "title": "Mock Channel",
                 "thumbnail_url": "https://via.placeholder.com/88",
@@ -112,7 +116,7 @@ class VideoService:
                 params={
                     "part": "snippet,contentDetails,statistics",
                     "id": channel_id,
-                    "key": self.api_key
+                    "key": YOUTUBE_API_KEY
                 }
             )
             if response.status_code == 200:
@@ -139,7 +143,7 @@ class VideoService:
         Fetches videos from a playlist, including duration to identify Shorts.
         Handles pagination to fetch up to `limit` videos.
         """
-        if not self.api_key:
+        if not YOUTUBE_API_KEY:
             # Mock data
             return [self._get_mock_data(f"mock_{i}") for i in range(5)]
 
@@ -157,7 +161,7 @@ class VideoService:
                     "part": "snippet,contentDetails",
                     "playlistId": playlist_id,
                     "maxResults": max_results,
-                    "key": self.api_key
+                    "key": YOUTUBE_API_KEY
                 }
                 if next_page_token:
                     params["pageToken"] = next_page_token
@@ -195,7 +199,8 @@ class VideoService:
                     params={
                         "part": "snippet,contentDetails",
                         "id": ",".join(video_ids),
-                        "key": self.api_key
+                        "id": ",".join(video_ids),
+                        "key": YOUTUBE_API_KEY
                     }
                 )
 
