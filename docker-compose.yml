@@ -1,0 +1,22 @@
+services:
+  frontend:
+    image: ${DOCKER_USERNAME}/cura-frontend:latest
+    ports:
+      - "3000:80" # Changed from 80:80 to avoid conflict
+    restart: always
+    depends_on:
+      - backend
+
+  backend:
+    image: ${DOCKER_USERNAME}/cura-backend:latest
+    ports:
+      - "8001:8000" # Changed from 8000:8000 to avoid conflict
+    env_file:
+      - ./backend/.env.production
+    volumes:
+      - ./uploads:/app/uploads
+    restart: always
+
+# Define volumes if needed for database persistence (if running DB in docker)
+# volumes:
+#   postgres_data:
