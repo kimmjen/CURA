@@ -40,8 +40,10 @@ class Video(SQLModel, table=True):
     title: str
     channel_name: str
     thumbnail_url: str
+    description: Optional[str] = None
     comment: Optional[str] = None
     category: VideoCategory = Field(default=VideoCategory.ETC)
+    duration_seconds: int = Field(default=0)
     published_at: datetime
 
     collection: Optional[Collection] = Relationship(back_populates="videos")

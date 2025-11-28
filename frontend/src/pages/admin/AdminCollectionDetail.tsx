@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Trash2, Plus, ExternalLink, Youtube, Settings, Download, ListVideo, Edit } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus, Youtube, Settings, Download, ListVideo, Edit, Play } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { EditVideoModal } from '@/components/admin/EditVideoModal';
 import { ImportModal } from '@/components/admin/ImportModal';
+import { Pagination } from '@/components/ui';
 import clsx from 'clsx';
 import * as api from '@/api';
+
+const formatDuration = (seconds: number | undefined | null) => {
+    if (typeof seconds !== 'number' || isNaN(seconds) || seconds === 0) return '00:00';
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) {
+        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+    return `${m}:${s.toString().padStart(2, '0')}`;
+};
 
 interface UpdateCollectionForm {
     title: string;
@@ -24,6 +36,7 @@ interface BulkAddForm {
 
 export const AdminCollectionDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [editingVideo, setEditingVideo] = useState<any>(null);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -31,7 +44,9 @@ export const AdminCollectionDetail: React.FC = () => {
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [addProgress, setAddProgress] = useState<string | null>(null);
 
-
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 50;
 
     // Fetch Collection Data
     const { data: collection, isLoading } = useQuery({
@@ -40,12 +55,29 @@ export const AdminCollectionDetail: React.FC = () => {
         enabled: !!id
     });
 
-    // Fetch Videos
-    const { data: videos } = useQuery({
-        queryKey: ['videos', id],
-        queryFn: () => api.getCollectionVideos(id!),
+    // Fetch Videos with pagination and category filter
+    const { data: videosResponse } = useQuery({
+        queryKey: ['videos', id, currentPage, filterCategory],
+        queryFn: async () => {
+            const skip = (currentPage - 1) * itemsPerPage;
+            const categoryParam = filterCategory !== 'ALL' ? `&category=${filterCategory}` : '';
+            const response = await fetch(
+                `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/collections/${id}/videos?skip=${skip}&limit=${itemsPerPage}${categoryParam}`
+            );
+            if (!response.ok) throw new Error('Failed to fetch videos');
+            return response.json();
+        },
         enabled: !!id
     });
+
+    const videos = videosResponse?.videos || [];
+    const totalVideos = videosResponse?.total || 0;
+    const totalPages = Math.ceil(totalVideos / itemsPerPage);
+
+    // Reset to page 1 when filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filterCategory]);
 
     // --- Update Collection ---
     const { register: registerUpdate, handleSubmit: handleSubmitUpdate, reset: resetUpdate } = useForm<UpdateCollectionForm>();
@@ -142,6 +174,16 @@ export const AdminCollectionDetail: React.FC = () => {
         },
     });
 
+    // --- Delete Collection ---
+    const deleteCollectionMutation = useMutation({
+        mutationFn: () => api.deleteCollection(id!),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['collections'] });
+            navigate('/admin'); // Redirect to dashboard
+        },
+        onError: () => setMessage({ type: 'error', text: 'Failed to delete collection.' }),
+    });
+
     if (isLoading) return <div className="min-h-screen bg-black text-white p-12">Loading...</div>;
 
     return (
@@ -206,9 +248,31 @@ export const AdminCollectionDetail: React.FC = () => {
                                     <Youtube className="w-5 h-5 text-red-500" /> Auto-Import from Channel
                                 </button>
                                 <p className="text-xs text-gray-500 text-center">
-                                    Automatically fetches videos from the official channel link.
+                                    Automatically fetches videos from a YouTube channel.
                                 </p>
                             </div>
+                        </div>
+
+                        {/* Danger Zone */}
+                        <div className="bg-gray-900 rounded-xl border border-red-900/30 p-6">
+                            <h2 className="text-lg font-bold mb-2 text-red-400">Danger Zone</h2>
+                            <p className="text-xs text-gray-500 mb-4">
+                                Permanently delete this collection and all videos. This action cannot be undone.
+                            </p>
+                            <button
+                                onClick={() => {
+                                    if (confirm(
+                                        "⚠️ WARNING: This will permanently delete this collection and ALL videos in it.\n\n" +
+                                        "This action CANNOT be undone.\n\n" +
+                                        "Are you absolutely sure?"
+                                    )) {
+                                        deleteCollectionMutation.mutate();
+                                    }
+                                }}
+                                className="w-full bg-red-900/50 hover:bg-red-900 text-red-200 font-bold py-3 rounded-lg transition border border-red-700"
+                            >
+                                Delete Collection
+                            </button>
                         </div>
                     </div>
 
@@ -250,9 +314,11 @@ export const AdminCollectionDetail: React.FC = () => {
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-lg font-bold flex items-center gap-2">
                                         <ListVideo className="w-5 h-5 text-gray-400" /> Video Library
-                                        <span className="text-sm font-normal text-gray-500 ml-2">({videos?.length || 0})</span>
+                                        <span className="text-sm font-normal text-gray-500 ml-2">
+                                            ({totalVideos} total)
+                                        </span>
                                     </h2>
-                                    {videos?.length > 0 && (
+                                    {totalVideos > 0 && (
                                         <button
                                             onClick={() => {
                                                 if (confirm("WARNING: This will delete ALL videos in this collection. This action cannot be undone. Are you sure?")) {
@@ -285,25 +351,41 @@ export const AdminCollectionDetail: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="divide-y divide-white/5 max-h-[800px] overflow-y-auto">
-                                {videos?.filter((v: any) => filterCategory === 'ALL' || v.category === filterCategory).map((video: any) => (
+                            <div className="divide-y divide-white/5">
+                                {videos?.map((video: any) => (
                                     <div key={video.id} className="p-4 flex gap-4 hover:bg-white/5 transition group">
-                                        <div className="w-32 aspect-video bg-black rounded overflow-hidden flex-shrink-0 relative border border-white/10">
+                                        <div className="w-32 aspect-video bg-black rounded overflow-hidden flex-shrink-0 relative border border-white/10 group-hover:border-white/30 transition">
                                             <img src={video.thumbnail_url} alt={video.title} className="w-full h-full object-cover" />
                                             <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-black/80 backdrop-blur rounded text-[10px] font-bold text-white border border-white/10">
                                                 {video.category}
                                             </div>
+                                            {/* Duration Badge */}
+                                            <div className="absolute bottom-1 right-1 px-1.5 py-0.5 bg-black/80 backdrop-blur rounded text-[10px] font-mono text-white border border-white/10">
+                                                {formatDuration(video.duration_seconds)}
+                                            </div>
+                                            {/* Play Overlay */}
+                                            <a
+                                                href={`https://youtu.be/${video.youtube_video_id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition backdrop-blur-[2px]"
+                                            >
+                                                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition">
+                                                    <Play className="w-4 h-4 text-black fill-black ml-0.5" />
+                                                </div>
+                                            </a>
                                         </div>
                                         <div className="flex-1 min-w-0 py-1">
                                             <h3 className="font-bold text-white text-sm truncate">{video.title}</h3>
                                             <p className="text-xs text-gray-500 truncate mt-0.5">{video.channel_name}</p>
-                                            <div className="flex items-center gap-3 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex items-center gap-4 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button onClick={() => setEditingVideo(video)} className="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1">
                                                     <Edit className="w-3 h-3" /> Edit
                                                 </button>
-                                                <a href={`https://youtu.be/${video.youtube_video_id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-400 hover:text-white flex items-center gap-1">
-                                                    <ExternalLink className="w-3 h-3" /> YouTube
-                                                </a>
+                                                <span className="text-xs text-gray-600">|</span>
+                                                <span className="text-xs text-gray-500 font-mono">
+                                                    {formatDuration(video.duration_seconds)}
+                                                </span>
                                             </div>
                                         </div>
                                         <button
@@ -324,6 +406,17 @@ export const AdminCollectionDetail: React.FC = () => {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Pagination */}
+                            {totalPages > 1 && (
+                                <div className="p-6 border-t border-white/5">
+                                    <Pagination
+                                        currentPage={currentPage}
+                                        totalPages={totalPages}
+                                        onPageChange={setCurrentPage}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

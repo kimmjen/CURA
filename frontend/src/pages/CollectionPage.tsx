@@ -42,16 +42,21 @@ export const CollectionPage: React.FC = () => {
         error: videosError
     } = useInfiniteQuery({
         queryKey: ['videos', id],
-        queryFn: ({ pageParam = 0 }) => api.getCollectionVideos(id!, pageParam, 20),
-        getNextPageParam: (lastPage, allPages) => {
-            return lastPage.length === 20 ? allPages.length * 20 : undefined;
+        queryFn: async ({ pageParam = 0 }) => {
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/collections/${id}/videos?skip=${pageParam}&limit=20`);
+            if (!response.ok) throw new Error('Failed to fetch videos');
+            return response.json();
+        },
+        getNextPageParam: (lastPage) => {
+            // Use backend's has_more flag
+            return lastPage.has_more ? lastPage.skip + lastPage.videos.length : undefined;
         },
         initialPageParam: 0,
         enabled: !!id,
     });
 
     // Flatten videos from all pages
-    const videos = data?.pages.flatMap(page => page) || [];
+    const videos = data?.pages.flatMap(page => page.videos || page) || [];
 
     // Intersection Observer for infinite scroll
     const { ref, inView } = useInView();

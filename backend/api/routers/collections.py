@@ -1,254 +1,369 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from typing import List
+from sqlalchemy import func
+from typing import List, Optional
+from datetime import datetime
 
 from core.database import get_session
-from core.models import Collection, Video
+from core.models import Collection, Video, VideoCategory
+from services.collection_service import collection_service
+from services.video_service import video_service
+from schemas.collection_schemas import (
+    CollectionCreate,
+    CollectionUpdate,
+    CollectionResponse,
+    VideoImportRequest
+)
+from schemas.video_schemas import VideoCreate, VideoResponse
 
 router = APIRouter(
     prefix="/collections",
     tags=["collections"]
 )
 
-@router.post("/", response_model=Collection, status_code=status.HTTP_201_CREATED)
-async def create_collection(collection: Collection, session: AsyncSession = Depends(get_session)):
-    session.add(collection)
-    await session.commit()
-    await session.refresh(collection)
-    await session.refresh(collection)
-    return collection
+@router.post("/", response_model=CollectionResponse, status_code=status.HTTP_201_CREATED)
+async def create_collection(
+    collection: CollectionCreate,
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Create a new collection
+    
+    Args:
+        collection: Collection creation data
+        session: Database session
+        
+    Returns:
+        Created collection
+    """
+    collection_data = collection.model_dump()
+    return await collection_service.create_collection(session, collection_data)
 
-@router.get("/", response_model=List[Collection])
+@router.get("/", response_model=List[CollectionResponse])
 async def list_collections(session: AsyncSession = Depends(get_session)):
-    result = await session.execute(select(Collection))
-    return result.scalars().all()
+    """
+    List all collections with video counts
+    
+    Args:
+        session: Database session
+        
+    Returns:
+        List of collections with video counts
+    """
+    # Get collections with video counts
+    result = await session.execute(
+        select(
+            Collection,
+            func.count(Video.id).label('video_count')
+        )
+        .outerjoin(Video, Collection.id == Video.collection_id)
+        .group_by(Collection.id)
+    )
+    
+    collections = []
+    for row in result:
+        collection_dict = {
+            **row[0].__dict__,
+            'video_count': row[1]
+        }
+        collections.append(collection_dict)
+    
+    return collections
 
-@router.get("/{collection_id}", response_model=Collection)
+@router.get("/{collection_id}", response_model=CollectionResponse)
 async def get_collection(
     collection_id: int, 
     session: AsyncSession = Depends(get_session)
 ):
-    result = await session.execute(
-        select(Collection).where(Collection.id == collection_id)
-    )
-    collection = result.scalars().first()
+    """
+    Get a collection by ID with video count
     
-    if not collection:
+    Args:
+        collection_id: Collection ID
+        session: Database session
+        
+    Returns:
+        Collection details with video count
+        
+    Raises:
+        HTTPException: If collection not found
+    """
+    # Get collection with video count
+    result = await session.execute(
+        select(
+            Collection,
+            func.count(Video.id).label('video_count')
+        )
+        .outerjoin(Video, Collection.id == Video.collection_id)
+        .where(Collection.id == collection_id)
+        .group_by(Collection.id)
+    )
+    
+    row = result.first()
+    if not row:
         raise HTTPException(status_code=404, detail="Collection not found")
     
-    return collection
+    collection_dict = {
+        **row[0].__dict__,
+        'video_count': row[1]
+    }
+    
+    return collection_dict
 
-@router.get("/{collection_id}/videos", response_model=List[Video])
+@router.get("/{collection_id}/videos")
 async def get_collection_videos(
     collection_id: int,
     skip: int = 0,
     limit: int = 20,
+    category: Optional[str] = None,
     session: AsyncSession = Depends(get_session)
 ):
+    """
+    Get videos in a collection with pagination and optional category filter
+    
+    Args:
+        collection_id: Collection ID
+        skip: Number of videos to skip
+        limit: Maximum number of videos to return
+        category: Optional category filter (e.g., 'MV', 'FANCAM', 'ALL')
+        session: Database session
+        
+    Returns:
+        Paginated video list with total count
+    """
+    # Build base query
+    base_query = select(Video).where(Video.collection_id == collection_id)
+    count_query = select(func.count(Video.id)).where(Video.collection_id == collection_id)
+    
+    # Apply category filter if provided and not 'ALL'
+    if category and category != 'ALL':
+        # Use cast to compare enum field with string value
+        from sqlalchemy import cast, String
+        base_query = base_query.where(cast(Video.category, String) == category)
+        count_query = count_query.where(cast(Video.category, String) == category)
+    
+    # Get total count with filter
+    total_result = await session.execute(count_query)
+    total = total_result.scalar() or 0
+    
+    # Get paginated videos with filter
     result = await session.execute(
-        select(Video)
-        .where(Video.collection_id == collection_id)
+        base_query
         .order_by(Video.published_at.desc())
         .offset(skip)
         .limit(limit)
     )
-    return result.scalars().all()
+    videos = result.scalars().all()
+    
+    return {
+        "videos": videos,
+        "total": total,
+        "skip": skip,
+        "limit": limit,
+        "has_more": (skip + len(videos)) < total
+    }
 
 @router.delete("/{collection_id}/videos", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_all_collection_videos(
     collection_id: int,
     session: AsyncSession = Depends(get_session)
 ):
-    # Verify collection exists
-    result = await session.execute(
-        select(Collection).where(Collection.id == collection_id)
-    )
-    collection = result.scalars().first()
-    if not collection:
+    """
+    Delete all videos in a collection
+    
+    Args:
+        collection_id: Collection ID
+        session: Database session
+        
+    Raises:
+        HTTPException: If collection not found
+    """
+    success = await collection_service.delete_all_videos(session, collection_id)
+    if not success:
         raise HTTPException(status_code=404, detail="Collection not found")
-
-    # Delete all videos
-    from sqlalchemy import delete
-    await session.execute(
-        delete(Video).where(Video.collection_id == collection_id)
-    )
-    await session.commit()
     return None
 
-@router.post("/{collection_id}/videos", response_model=Video, status_code=status.HTTP_201_CREATED)
+@router.post("/{collection_id}/videos", response_model=VideoResponse, status_code=status.HTTP_201_CREATED)
 async def add_video_to_collection(
     collection_id: int, 
-    video: Video, 
+    video: VideoCreate, 
     session: AsyncSession = Depends(get_session)
 ):
+    """
+    Add a video to a collection
+    
+    Args:
+        collection_id: Collection ID
+        video: Video data
+        session: Database session
+        
+    Returns:
+        Created video
+        
+    Raises:
+        HTTPException: If collection not found
+    """
     # Verify collection exists
-    result = await session.execute(
-        select(Collection).where(Collection.id == collection_id)
-    )
-    collection = result.scalars().first()
+    collection = await collection_service.get_collection(session, collection_id)
     if not collection:
         raise HTTPException(status_code=404, detail="Collection not found")
     
-    # Manually parse published_at if it's a string (Pydantic/SQLModel quirk)
-    if isinstance(video.published_at, str):
-        from datetime import datetime
+    # Parse published_at if it's a string
+    video_data = video.model_dump()
+    if isinstance(video_data.get('published_at'), str):
         try:
-            video.published_at = datetime.fromisoformat(video.published_at.replace('Z', '+00:00'))
+            video_data['published_at'] = datetime.fromisoformat(
+                video_data['published_at'].replace('Z', '+00:00')
+            )
         except ValueError:
             pass
-            
-    # Ensure category is set (defaults to ETC if missing/null)
-    if not video.category:
-        from core.models import VideoCategory
-        video.category = VideoCategory.ETC
-
-    video.collection_id = collection_id
-    session.add(video)
+    
+    # Ensure category is set
+    if not video_data.get('category'):
+        video_data['category'] = VideoCategory.ETC
+    
+    # Create video
+    video_data['collection_id'] = collection_id
+    db_video = Video(**video_data)
+    session.add(db_video)
     await session.commit()
-    await session.refresh(video)
-    return video
+    await session.refresh(db_video)
+    return db_video
 
-@router.put("/{collection_id}", response_model=Collection)
+@router.put("/{collection_id}", response_model=CollectionResponse)
 async def update_collection(
     collection_id: int,
-    collection_update: Collection,
+    collection_update: CollectionUpdate,
     session: AsyncSession = Depends(get_session)
 ):
-    result = await session.execute(
-        select(Collection).where(Collection.id == collection_id)
+    """
+    Update a collection
+    
+    Args:
+        collection_id: Collection ID
+        collection_update: Collection update data
+        session: Database session
+        
+    Returns:
+        Updated collection
+        
+    Raises:
+        HTTPException: If collection not found
+    """
+    update_data = collection_update.model_dump(exclude_unset=True)
+    collection = await collection_service.update_collection(
+        session, 
+        collection_id, 
+        update_data
     )
-    db_collection = result.scalars().first()
-    if not db_collection:
+    if not collection:
         raise HTTPException(status_code=404, detail="Collection not found")
+    return collection
+
+@router.delete("/{collection_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_collection(
+    collection_id: int,
+    session: AsyncSession = Depends(get_session)
+):
+    """
+    Delete a collection and all associated videos (CASCADE)
     
-    db_collection.title = collection_update.title
-    db_collection.description = collection_update.description
-    db_collection.cover_image_url = collection_update.cover_image_url
-    db_collection.profile_image_url = collection_update.profile_image_url
-    db_collection.official_link = collection_update.official_link
-    db_collection.type = collection_update.type
-    
-    session.add(db_collection)
-    await session.commit()
-    await session.refresh(db_collection)
-    return db_collection
+    Args:
+        collection_id: Collection ID
+        session: Database session
+        
+    Raises:
+        HTTPException: If collection not found
+    """
+    success = await collection_service.delete_collection(session, collection_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Collection not found")
+    return None
 
 @router.get("/{collection_id}/channel-info")
 async def get_collection_channel_info(
     collection_id: int,
     session: AsyncSession = Depends(get_session)
 ):
-    # 1. Get Collection
-    result = await session.execute(select(Collection).where(Collection.id == collection_id))
-    collection = result.scalars().first()
+    """
+    Get YouTube channel information for a collection
+    
+    Args:
+        collection_id: Collection ID
+        session: Database session
+        
+    Returns:
+        Channel information from YouTube
+        
+    Raises:
+        HTTPException: If collection not found, no official link, or YouTube API errors
+    """
+    # Get collection
+    collection = await collection_service.get_collection(session, collection_id)
     if not collection:
         raise HTTPException(status_code=404, detail="Collection not found")
-
-    # 2. Determine Channel URL
-    channel_url = collection.official_link
-    if not channel_url:
-        raise HTTPException(status_code=400, detail="No official link set for this collection.")
-
-    # 3. Resolve Channel ID
-    from services.video_service import video_service
-    channel_id = await video_service.get_channel_id_from_url(channel_url)
+    
+    # Check official link
+    if not collection.official_link:
+        raise HTTPException(
+            status_code=400, 
+            detail="No official link set for this collection"
+        )
+    
+    # Get channel ID
+    channel_id = await video_service.get_channel_id_from_url(
+        collection.official_link
+    )
     if not channel_id:
-        raise HTTPException(status_code=400, detail="Could not resolve YouTube Channel ID from URL.")
-
-    # 4. Get Channel Info
+        raise HTTPException(
+            status_code=400, 
+            detail="Could not resolve YouTube Channel ID from URL"
+        )
+    
+    # Get channel info
     info = await video_service.get_channel_info(channel_id)
     if not info:
-        raise HTTPException(status_code=400, detail="Could not fetch channel info.")
-        
+        raise HTTPException(
+            status_code=400, 
+            detail="Could not fetch channel info"
+        )
+    
     return info
 
 @router.post("/{collection_id}/import", status_code=status.HTTP_201_CREATED)
 async def import_videos_from_channel(
     collection_id: int,
-    payload: dict = {}, # {"limit": 1000} optional
+    payload: VideoImportRequest = VideoImportRequest(),
     session: AsyncSession = Depends(get_session)
 ):
-    # 1. Get Collection
-    result = await session.execute(select(Collection).where(Collection.id == collection_id))
-    collection = result.scalars().first()
-    if not collection:
-        raise HTTPException(status_code=404, detail="Collection not found")
-
-    # 2. Determine Channel URL
-    channel_url = collection.official_link
-    if not channel_url:
-        raise HTTPException(status_code=400, detail="No official link set.")
-
-    # 3. Resolve Channel ID
-    from services.video_service import video_service
-    channel_id = await video_service.get_channel_id_from_url(channel_url)
-    if not channel_id:
-        raise HTTPException(status_code=400, detail="Could not resolve YouTube Channel ID from URL.")
-
-    # 4. Get Uploads Playlist
-    playlist_id = await video_service.get_channel_uploads_playlist_id(channel_id)
-    if not playlist_id:
-        raise HTTPException(status_code=400, detail="Could not find 'Uploads' playlist for this channel.")
-
-    # 5. Fetch Videos (Default to 5000 to fetch 'all' for most channels)
-    limit = payload.get("limit", 5000)
-    videos_data = await video_service.get_playlist_videos(playlist_id, limit=limit)
+    """
+    Import videos from a YouTube channel
     
-    # 6. Save to DB (Skip duplicates)
-    imported_count = 0
-    from core.models import VideoCategory
-    
-    for v_data in videos_data:
-        # Check if video already exists in this collection
-        existing = await session.execute(
-            select(Video).where(
-                Video.collection_id == collection_id,
-                Video.youtube_video_id == v_data["youtube_video_id"]
-            )
-        )
-        if existing.scalars().first():
-            continue
-
-        # Determine Category
-        category = VideoCategory.ETC
-        title_upper = v_data["title"].upper()
+    Args:
+        collection_id: Collection ID
+        payload: Import configuration (limit)
+        session: Database session
         
-        # 1. Shorts (Duration <= 60s)
-        if v_data.get("duration_seconds", 0) <= 60:
-            category = VideoCategory.SHORTS
-        # 2. FANCAM (Priority: Specific type of live/performance)
-        elif any(keyword in title_upper for keyword in ["FANCAM", "직캠", "FOCUS"]):
-            category = VideoCategory.FANCAM
-        # 3. MV
-        elif any(keyword in title_upper for keyword in ["MV", "M/V", "OFFICIAL VIDEO", "MUSIC VIDEO"]):
-            category = VideoCategory.MV
-        # 4. LIVE
-        elif any(keyword in title_upper for keyword in ["LIVE", "STAGE", "PERFORMANCE", "CONCERT"]):
-            category = VideoCategory.LIVE
-        # 5. BEHIND
-        elif any(keyword in title_upper for keyword in ["BEHIND", "MAKING", "SKETCH", "JACKET", "RECORD"]):
-            category = VideoCategory.BEHIND
-        # 6. VLOG
-        elif any(keyword in title_upper for keyword in ["VLOG", "LOG", "브이로그"]):
-            category = VideoCategory.VLOG
-        # 7. INTERVIEW
-        elif any(keyword in title_upper for keyword in ["INTERVIEW", "TALK", "Q&A"]):
-            category = VideoCategory.INTERVIEW
-
-        new_video = Video(
-            collection_id=collection_id,
-            youtube_video_id=v_data["youtube_video_id"],
-            title=v_data["title"],
-            channel_name=v_data["channel_name"],
-            thumbnail_url=v_data["thumbnail_url"],
-            description=v_data["description"][:500], # Truncate description
-            published_at=v_data["published_at"],
-            category=category
+    Returns:
+        Import results
+        
+    Raises:
+        HTTPException: If errors occur during import
+    """
+    try:
+        result = await collection_service.import_videos_from_channel(
+            session,
+            collection_id,
+            limit=payload.limit,
+            custom_channel_url=payload.custom_channel_url,
+            default_category=payload.default_category
         )
-        session.add(new_video)
-        imported_count += 1
-    
-    await session.commit()
-    
-    return {"message": f"Successfully imported {imported_count} videos.", "imported_count": imported_count}
+        return result
+    except ValueError as e:
+        # Convert ValueError to appropriate HTTP error
+        if "not found" in str(e).lower():
+            status_code = 404
+        else:
+            status_code = 400
+        raise HTTPException(status_code=status_code, detail=str(e))

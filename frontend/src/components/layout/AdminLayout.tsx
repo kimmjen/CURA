@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Disc, LogOut, Settings, Users } from 'lucide-react';
+import { LayoutDashboard, Disc, LogOut, Settings, Users, FolderOpen } from 'lucide-react';
 import { clsx } from 'clsx';
 
 interface AdminLayoutProps {
@@ -25,6 +25,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
                 <nav className="flex-1 p-4 space-y-2">
                     <AdminNavLink to="/admin" icon={<LayoutDashboard size={20} />} label="Dashboard" active={location.pathname === '/admin'} />
+                    <AdminNavLink to="/admin/collections" icon={<FolderOpen size={20} />} label="Collections" active={location.pathname.startsWith('/admin/collections')} />
                     <AdminNavLink to="/admin/users" icon={<Users size={20} />} label="Users" active={location.pathname === '/admin/users'} />
                     <AdminNavLink to="/admin/settings" icon={<Settings size={20} />} label="Settings" active={location.pathname === '/admin/settings'} />
                     <AdminNavLink to="/style-guide" icon={<Disc size={20} />} label="Style Guide" active={location.pathname === '/style-guide'} />

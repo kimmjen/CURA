@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal } from '@/components/common/Modal';
+import { Select, Input } from '@/components/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import * as api from '@/api';
 
@@ -16,6 +17,9 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, colle
     const queryClient = useQueryClient();
     const [state, setState] = useState<ModalState>('initial');
     const [message, setMessage] = useState('');
+    const [importMode, setImportMode] = useState<'official' | 'custom'>('official');
+    const [customChannelUrl, setCustomChannelUrl] = useState('');
+    const [defaultCategory, setDefaultCategory] = useState<string>('');
 
 
     // Reset state when opening
@@ -33,7 +37,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, colle
             const info = await api.getChannelInfo(collectionId);
             // setChannelInfo(info);
             setState('confirm');
-            setMessage(`Found channel "${info.title}" with ${info.video_count} videos.Do you want to import all of them ? `);
+            setMessage(`Found channel "${info.title}" with ${info.video_count} videos. Do you want to import all of them?`);
         } catch (error: any) {
             setState('error');
             setMessage(error.message);
@@ -45,7 +49,12 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, colle
         setMessage('Fetching videos from YouTube... This may take a while.');
 
         try {
-            const data = await api.importFromChannel(collectionId);
+            const data = await api.importFromChannel(
+                collectionId,
+                5000,
+                importMode === 'custom' ? customChannelUrl : undefined,
+                importMode === 'custom' && defaultCategory ? defaultCategory : undefined
+            );
             setState('success');
             setMessage(data.message);
             queryClient.invalidateQueries({ queryKey: ['videos', collectionId] });
@@ -58,6 +67,9 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, colle
 
     const handleClose = () => {
         setState('initial');
+        setImportMode('official');
+        setCustomChannelUrl('');
+        setDefaultCategory('');
         onClose();
     };
 
@@ -75,6 +87,47 @@ export const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, colle
         >
             <div className="space-y-6">
                 <p className="text-gray-300">{message}</p>
+
+                {/* Import Mode Selection */}
+                {state === 'confirm' && (
+                    <div className="space-y-4">
+                        <Select
+                            label="Import Source"
+                            value={importMode}
+                            onChange={(e) => setImportMode(e.target.value as 'official' | 'custom')}
+                        >
+                            <option value="official">Official Channel</option>
+                            <option value="custom">Custom Channel URL</option>
+                        </Select>
+
+                        {importMode === 'custom' && (
+                            <>
+                                <Input
+                                    label="YouTube Channel URL"
+                                    value={customChannelUrl}
+                                    onChange={(e) => setCustomChannelUrl(e.target.value)}
+                                    placeholder="https://www.youtube.com/@channel_name"
+                                />
+
+                                <Select
+                                    label="Default Category (Optional)"
+                                    value={defaultCategory}
+                                    onChange={(e) => setDefaultCategory(e.target.value)}
+                                >
+                                    <option value="">No default category</option>
+                                    <option value="FANCAM">FANCAM</option>
+                                    <option value="MV">MV</option>
+                                    <option value="LIVE">LIVE</option>
+                                    <option value="INTERVIEW">INTERVIEW</option>
+                                    <option value="SHORTS">SHORTS</option>
+                                    <option value="BEHIND">BEHIND</option>
+                                    <option value="VLOG">VLOG</option>
+                                    <option value="ETC">ETC</option>
+                                </Select>
+                            </>
+                        )}
+                    </div>
+                )}
 
                 <div className="flex justify-end gap-3">
                     {state === 'confirm' ? (

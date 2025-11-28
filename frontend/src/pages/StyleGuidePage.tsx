@@ -2,6 +2,7 @@ import React from 'react';
 import { Play, Trash2, ExternalLink, Edit, Settings } from 'lucide-react';
 import { clsx } from 'clsx';
 import { AdminLayout } from '../components/layout/AdminLayout';
+import { Button, Input, Select, Textarea, Badge, Card } from '../components/ui';
 
 export const StyleGuidePage: React.FC = () => {
     return (
@@ -73,22 +74,40 @@ export const StyleGuidePage: React.FC = () => {
                     {/* Buttons */}
                     <section className="space-y-8">
                         <h2 className="text-2xl font-bold text-blue-400 uppercase tracking-widest border-b border-blue-900/30 pb-2">Buttons</h2>
-                        <div className="flex flex-wrap gap-6 items-center">
-                            <button className="bg-white text-black font-bold px-6 py-3 rounded-lg hover:bg-gray-200 transition">
-                                Primary Button
-                            </button>
-                            <button className="bg-blue-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-blue-500 transition">
-                                Accent Button
-                            </button>
-                            <button className="bg-gray-800 text-white font-bold px-6 py-3 rounded-lg hover:bg-gray-700 transition">
-                                Secondary Button
-                            </button>
-                            <button className="bg-red-900/20 text-red-400 border border-red-900/50 font-bold px-6 py-3 rounded-lg hover:bg-red-900/40 transition">
-                                Danger Button
-                            </button>
-                            <button className="p-3 rounded-full hover:bg-white/10 transition text-white">
-                                <Settings className="w-6 h-6" />
-                            </button>
+                        <div className="space-y-6">
+                            {/* Variants */}
+                            <div>
+                                <p className="text-sm text-gray-500 mb-3 font-mono">Button Variants</p>
+                                <div className="flex flex-wrap gap-4 items-center">
+                                    <Button variant="primary">Primary Button</Button>
+                                    <Button variant="accent">Accent Button</Button>
+                                    <Button variant="secondary">Secondary Button</Button>
+                                    <Button variant="danger">Danger Button</Button>
+                                    <Button variant="ghost">Ghost Button</Button>
+                                </div>
+                            </div>
+
+                            {/* Sizes */}
+                            <div>
+                                <p className="text-sm text-gray-500 mb-3 font-mono">Button Sizes</p>
+                                <div className="flex flex-wrap gap-4 items-center">
+                                    <Button size="sm">Small</Button>
+                                    <Button size="md">Medium</Button>
+                                    <Button size="lg">Large</Button>
+                                    <Button size="icon">
+                                        <Settings className="w-6 h-6" />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* States */}
+                            <div>
+                                <p className="text-sm text-gray-500 mb-3 font-mono">Button States</p>
+                                <div className="flex flex-wrap gap-4 items-center">
+                                    <Button loading>Loading...</Button>
+                                    <Button disabled>Disabled</Button>
+                                </div>
+                            </div>
                         </div>
                     </section>
 
@@ -96,21 +115,26 @@ export const StyleGuidePage: React.FC = () => {
                     <section className="space-y-8">
                         <h2 className="text-2xl font-bold text-blue-400 uppercase tracking-widest border-b border-blue-900/30 pb-2">Form Elements</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Input Field</label>
-                                <input type="text" placeholder="Enter text here..." className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-white outline-none transition" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Select Dropdown</label>
-                                <select className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-white outline-none transition">
-                                    <option>Option 1</option>
-                                    <option>Option 2</option>
-                                    <option>Option 3</option>
-                                </select>
-                            </div>
+                            <Input
+                                label="Input Field"
+                                placeholder="Enter text here..."
+                            />
+                            <Input
+                                label="Input with Error"
+                                placeholder="Enter text..."
+                                error="This field is required"
+                            />
+                            <Select label="Select Dropdown">
+                                <option>Option 1</option>
+                                <option>Option 2</option>
+                                <option>Option 3</option>
+                            </Select>
                             <div className="md:col-span-2">
-                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Text Area</label>
-                                <textarea rows={3} placeholder="Enter long text..." className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-white outline-none transition" />
+                                <Textarea
+                                    label="Text Area"
+                                    rows={3}
+                                    placeholder="Enter long text..."
+                                />
                             </div>
                         </div>
                     </section>
@@ -194,12 +218,62 @@ export const StyleGuidePage: React.FC = () => {
                     {/* Badges & Tags */}
                     <section className="space-y-8">
                         <h2 className="text-2xl font-bold text-blue-400 uppercase tracking-widest border-b border-blue-900/30 pb-2">Badges & Tags</h2>
-                        <div className="flex flex-wrap gap-4">
-                            <span className="px-2 py-1 rounded border border-white/10 text-[10px] font-bold text-gray-400 uppercase tracking-wider">MV</span>
-                            <span className="px-2 py-1 rounded border border-white/10 text-[10px] font-bold text-gray-400 uppercase tracking-wider">LIVE</span>
-                            <span className="px-2 py-1 rounded border border-white/10 text-[10px] font-bold text-gray-400 uppercase tracking-wider">FANCAM</span>
-                            <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-white text-black">Active Tab</span>
-                            <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-gray-800 text-gray-400">Inactive Tab</span>
+                        <div className="space-y-6">
+                            {/* Category Badges */}
+                            <div>
+                                <p className="text-sm text-gray-500 mb-3 font-mono">Category Badges</p>
+                                <div className="flex flex-wrap gap-4">
+                                    <Badge>MV</Badge>
+                                    <Badge>LIVE</Badge>
+                                    <Badge>FANCAM</Badge>
+                                    <Badge>SHORTS</Badge>
+                                    <Badge>VLOG</Badge>
+                                </div>
+                            </div>
+
+                            {/* Tab Badges */}
+                            <div>
+                                <p className="text-sm text-gray-500 mb-3 font-mono">Tab States</p>
+                                <div className="flex flex-wrap gap-4">
+                                    <Badge variant="active">Active Tab</Badge>
+                                    <Badge variant="inactive">Inactive Tab</Badge>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* Cards */}
+                    <section className="space-y-8">
+                        <h2 className="text-2xl font-bold text-blue-400 uppercase tracking-widest border-b border-blue-900/30 pb-2">Cards</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
+                            {/* Default Card */}
+                            <Card>
+                                <h3 className="font-bold text-white mb-2">기본 카드</h3>
+                                <p className="text-sm text-gray-400">기본 스타일의 카드 컨테이너입니다.</p>
+                            </Card>
+
+                            {/* Hover Card */}
+                            <Card hover>
+                                <h3 className="font-bold text-white mb-2">호버 효과 카드</h3>
+                                <p className="text-sm text-gray-400">마우스를 올리면 효과가 나타납니다.</p>
+                            </Card>
+
+                            {/* Complex Card */}
+                            <Card hover className="md:col-span-2">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                                        <Play className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="font-bold text-white mb-1">복잡한 카드 예시</h3>
+                                        <p className="text-sm text-gray-400 mb-3">아이콘, 텍스트, 버튼을 포함한 카드입니다.</p>
+                                        <div className="flex gap-2">
+                                            <Button size="sm" variant="accent">액션</Button>
+                                            <Button size="sm" variant="ghost">취소</Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
                         </div>
                     </section>
 

@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { CollectionPage } from './pages/CollectionPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
+import { AdminCollections } from './pages/admin/AdminCollections';
 import { AdminCreateCollection } from './pages/admin/AdminCreateCollection';
 import { AdminCollectionDetail } from './pages/admin/AdminCollectionDetail';
 import { AdminUsers } from './pages/admin/AdminUsers';
@@ -25,6 +26,7 @@ function App() {
 
         {/* Admin Routes (Self-contained Layout) */}
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/collections" element={<AdminCollections />} />
         <Route path="/admin/create" element={<AdminCreateCollection />} />
         <Route path="/admin/collections/:id" element={<AdminCollectionDetail />} />
         <Route path="/admin/users" element={<AdminUsers />} />

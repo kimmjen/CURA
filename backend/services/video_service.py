@@ -199,7 +199,6 @@ class VideoService:
                     params={
                         "part": "snippet,contentDetails",
                         "id": ",".join(video_ids),
-                        "id": ",".join(video_ids),
                         "key": YOUTUBE_API_KEY
                     }
                 )

@@ -38,7 +38,7 @@ export const EditVideoModal: React.FC<EditVideoModalProps> = ({ isOpen, onClose,
             <div className="bg-gray-900 border border-white/10 rounded-xl w-full max-w-lg overflow-hidden shadow-2xl">
                 <div className="flex justify-between items-center p-6 border-b border-white/10">
                     <h2 className="text-xl font-bold text-white">Edit Video</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white transition">
+                    <button onClick={onClose} className="text-gray-400 hover:text-white transition cursor-pointer">
                         <X className="w-6 h-6" />
                     </button>
                 </div>
@@ -93,8 +93,8 @@ export const EditVideoModal: React.FC<EditVideoModalProps> = ({ isOpen, onClose,
                     </div>
 
                     <div className="pt-4 flex justify-end gap-3">
-                        <button type="button" onClick={onClose} className="px-4 py-2 rounded text-gray-300 hover:bg-white/10 transition">Cancel</button>
-                        <button type="submit" className="px-6 py-2 bg-white text-black rounded font-bold hover:bg-gray-200 transition">Save Changes</button>
+                        <button type="button" onClick={onClose} className="px-4 py-2 rounded text-gray-300 hover:bg-white/10 transition cursor-pointer">Cancel</button>
+                        <button type="submit" className="px-6 py-2 bg-white text-black rounded font-bold hover:bg-gray-200 transition cursor-pointer">Save Changes</button>
                     </div>
                 </form>
             </div>
