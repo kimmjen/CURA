@@ -44,6 +44,18 @@ public class VideoController {
         return ResponseEntity.ok(videoService.getTrendingVideos(limit));
     }
 
+    @GetMapping("/recent")
+    public ResponseEntity<VideoDto.ListResponse> getRecentVideos(
+            @RequestParam(defaultValue = "20") int limit) {
+        var videos = videoService.getRecentVideos(limit);
+        return ResponseEntity.ok(VideoDto.ListResponse.builder()
+                .videos(videos)
+                .total((long) videos.size())
+                .page(1)
+                .pageSize(limit)
+                .build());
+    }
+
     @PostMapping("/{id}/sync")
     public ResponseEntity<VideoDto.Response> refreshVideoMetadata(@PathVariable Long id) {
         return ResponseEntity.ok(videoService.refreshVideoMetadata(id));

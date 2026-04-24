@@ -29,8 +29,8 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers("/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/actuator/**")
                         .permitAll()
-                        // Allow public access to Trending videos and single-video lookups
-                        .requestMatchers("/api/videos/trending", "/api/videos/{id}")
+                        // Public: trending/recent feeds and single-video lookups
+                        .requestMatchers("/api/videos/trending", "/api/videos/recent", "/api/videos/{id}")
                         .permitAll()
                         // API endpoints require authentication
                         .requestMatchers("/api/**").authenticated()
