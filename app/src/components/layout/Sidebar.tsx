@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useVideos } from '@/hooks/useVideos';
+import { useCollections } from '@/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import Dropdown, { DropdownItem } from '../ui/Dropdown';
@@ -16,7 +16,8 @@ interface SidebarProps {
 const SidebarContent: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { collections } = useVideos();
+    const { data: collectionsSlice } = useCollections();
+    const collections = collectionsSlice?.content ?? [];
     const { user, signOut } = useAuth();
     const { t, language, setLanguage } = useLanguage();
     const { theme, setTheme } = useTheme();
