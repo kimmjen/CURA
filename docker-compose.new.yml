@@ -1,0 +1,50 @@
+# ===========================================
+# CURA Docker Compose - Active Stack
+# app/ (Frontend) + backend-spring/ (Backend)
+# ===========================================
+
+services:
+  # ===== Frontend (React + Vite) =====
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8001/api}
+    image: ${DOCKER_USERNAME:-cura}/cura-app:latest
+    container_name: cura-app
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - cura-network
+
+  # ===== Backend (Spring Boot) =====
+  backend:
+    build:
+      context: ./backend-spring
+      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME:-cura}/cura-backend-spring:latest
+    container_name: cura-backend
+    ports:
+      - "8001:8001"
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+    env_file:
+      - ./backend-spring/.env
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8001/actuator/health/liveness" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - cura-network
+
+networks:
+  cura-network:
+    driver: bridge

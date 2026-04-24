@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@theme {
+    /* ===== Colors ===== */
+    --color-bg-primary: #0a0a0a;
+    --color-bg-secondary: #141414;
+    --color-bg-tertiary: #1f1f1f;
+    --color-bg-hover: #2a2a2a;
+
+    --color-border-default: #2a2a2a;
+    --color-border-focus: #3a3a3a;
+
+    --color-accent-primary: #1db954;
+    --color-accent-hover: #1ed760;
+    --color-accent-muted: #1a9d4a;
+
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #b3b3b3;
+    --color-text-tertiary: #737373;
+
+    --color-error: #f44336;
+    --color-warning: #ff9800;
+    --color-success: #4caf50;
+    --color-info: #2196f3;
+
+    /* Category Colors */
+    --color-category-live: #ff4444;
+    --color-category-mv: #9c27b0;
+    --color-category-fancam: #ff6b9d;
+    --color-category-broadcast: #2196f3;
+    --color-category-behind: #ffeb3b;
+    --color-category-shorts: #00bcd4;
+    --color-category-interview: #4caf50;
+
+    /* ===== Typography ===== */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-display: 'Outfit', sans-serif;
+
+    /* ===== Spacing ===== */
+    --spacing-1: 0.25rem;
+    --spacing-2: 0.5rem;
+    --spacing-3: 0.75rem;
+    --spacing-4: 1rem;
+    --spacing-5: 1.25rem;
+    --spacing-6: 1.5rem;
+    --spacing-8: 2rem;
+    --spacing-10: 2.5rem;
+    --spacing-12: 3rem;
+    --spacing-16: 4rem;
+
+    /* ===== Border Radius ===== */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-full: 9999px;
+
+    /* ===== Transitions ===== */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+    /* margin: 0; */
+    /* padding: 0; */
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+    min-height: 100vh;
+}
