@@ -76,6 +76,12 @@ docker-compose up --build                                # legacy stack
 
 **Image uploads** go through the backend's `/api/upload` router, which writes to Supabase Storage — not the local `backend/uploads/` directory (that path exists as a Docker volume mount for legacy/fallback use only).
 
+**Auth model differs by stack.** Spring (`backend-spring/`) uses Supabase-issued JWTs: `SecurityConfig` decodes HS256 tokens with `supabase.jwt-secret` and requires auth on `/api/**` except `/api/videos/trending` and `/api/videos/{id}`. Controllers read `UUID.fromString(jwt.getSubject())` for the user id. Legacy FastAPI has no auth layer — every endpoint is open. `app/` wires Supabase Auth end-to-end (`AuthContext`, `ProtectedRoute`, `Bearer` header on every `fetch`); `frontend/` does not.
+
+**CORS** for Spring is driven by the `CORS_ORIGINS` env var (`application.yml` binds it to `cors.allowed-origins`, `SecurityConfig` reads that property). The Spring filter chain runs before MVC, so there is no `WebConfig` — don't reintroduce one.
+
+**Deploy scripts are local-only.** `.gitignore` blocks `scripts/*.sh` and whitelists `scripts/*.example.sh`. Commit the template (with placeholder IP/Docker-user), keep the real script with your server IP + SSH key path on your machine only.
+
 ## What's tracked elsewhere
 
 - README.md — full API reference (request/response shapes for every endpoint), deployment walkthrough, phase roadmap.
