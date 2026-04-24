@@ -38,20 +38,34 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Frontend Build
+# Frontend — legacy stack
 frontend/dist/
-frontend/.env.local
-frontend/.env.dev
-frontend/.env.production
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
+frontend/.env
+frontend/.env.*
+!frontend/.env.development
+!frontend/.env.example
 
-# Backend
+# Frontend — active stack (app/)
+app/dist/
+app/storybook-static/
+app/.env
+app/.env.*
+!app/.env.example
+
+# Backend — FastAPI (legacy)
 backend/uploads/
 backend/.env
 backend/.env.*
 !backend/.env.example
+
+# Backend — Spring Boot (active)
+backend-spring/build/
+backend-spring/.gradle/
+backend-spring/bin/
+backend-spring/logs/
+backend-spring/.env
+backend-spring/.env.*
+!backend-spring/.env.example
 
 # IDE
 .idea/
@@ -68,6 +82,14 @@ backend/.env.*
 ehthumbs.db
 Thumbs.db
 
+# Scratch / prompt notes at repo root
+/r.md
+/t.md
+/w.md
+/check.md
+/PROMPT_*.md
+/test_cors_config.py
+
 # Scripts (Ignore actual scripts, but allow templates)
-scripts/*
+scripts/*.sh
 !scripts/*.example.sh
