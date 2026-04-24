@@ -14,7 +14,17 @@ const config: StorybookConfig = {
     options: {},
   },
   viteFinal: async (config) => {
-    // Ensure Tailwind CSS is loaded
+    // Strip VitePWA from the Storybook build — the storybook runtime
+    // ships a 3 MB chunk that blows past workbox's default 2 MB precache
+    // limit, and Storybook doesn't need to be a PWA.
+    const stripPwa = (plugin: unknown): boolean => {
+      if (Array.isArray(plugin)) return plugin.some(stripPwa);
+      const name = (plugin as { name?: string } | undefined)?.name;
+      return !!name && name.includes('pwa');
+    };
+    if (config.plugins) {
+      config.plugins = config.plugins.filter((p) => !stripPwa(p));
+    }
     return config;
   },
 };
