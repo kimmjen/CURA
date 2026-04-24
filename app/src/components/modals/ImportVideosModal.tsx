@@ -21,7 +21,7 @@ export interface ImportVideosModalProps {
 export default function ImportVideosModal({
     open,
     onClose,
-    collectionId,
+    collectionId: _collectionId,
     onImport,
 }: ImportVideosModalProps) {
     const [loading, setLoading] = useState(false);

@@ -5,7 +5,6 @@ import { VideoCard, VideoCardSkeleton } from '@/components/video';
 import Button from '@/components/ui/Button';
 import Dropdown, { DropdownItem } from '@/components/ui/Dropdown';
 import { EmptyState } from '@/components/common';
-import { cn } from '@/utils/utils';
 import type { Video } from '@/types/video';
 
 type TimeFilter = 'week' | 'month' | 'all';

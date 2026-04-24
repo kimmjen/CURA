@@ -39,7 +39,7 @@ export default function RecentPage() {
                 setWatchHistory(response.content);
             }
 
-            setHasMore(!response.last);
+            setHasMore(pageNum + 1 < response.totalPages);
         } catch (err) {
             console.error('Failed to load watch history:', err);
         } finally {

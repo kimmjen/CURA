@@ -13,7 +13,7 @@ export default function YouTubePlayer({
     videoId,
     autoplay = false,
     onReady,
-    onStateChange,
+    onStateChange: _onStateChange,
     className,
 }: YouTubePlayerProps) {
     const iframeRef = useRef<HTMLIFrameElement>(null);

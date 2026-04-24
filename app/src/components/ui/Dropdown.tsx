@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, ReactNode, createContext, useContext } from 'react';
+import { useState, useRef, useEffect, createContext, useContext } from 'react';
+import type { ReactNode } from 'react';
 import { cn } from '@/utils/utils';
 
 const DropdownContext = createContext<{ close: () => void } | null>(null);

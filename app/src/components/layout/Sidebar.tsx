@@ -139,7 +139,7 @@ const SidebarContent: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
                                     >
                                         <span className="truncate">{collection.title}</span>
                                         <span className="text-xs text-[var(--color-text-secondary)] opacity-70">
-                                            {collection.videoIds?.length ?? 0}
+                                            {collection.videoCount ?? 0}
                                         </span>
                                     </button>
                                 ))
@@ -167,7 +167,7 @@ const SidebarContent: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
                                     </div>
                                     <div className="flex-1 min-w-0 text-left">
                                         <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
-                                            {user.name || user.email?.split('@')[0]}
+                                            {user.user_metadata?.username || user.email?.split('@')[0]}
                                         </p>
                                         <p className="text-[10px] text-[var(--color-text-secondary)] truncate leading-none">
                                             {user.email}

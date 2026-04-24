@@ -1,4 +1,5 @@
-import { ImgHTMLAttributes, forwardRef } from 'react';
+import { forwardRef } from 'react';
+import type { ImgHTMLAttributes } from 'react';
 import { cn } from '@/utils/utils';
 
 export interface AvatarProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> {

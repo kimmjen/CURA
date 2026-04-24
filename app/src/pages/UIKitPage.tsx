@@ -10,13 +10,13 @@ import Avatar from '@/components/ui/Avatar';
 import Card from '@/components/ui/Card';
 import Modal from '@/components/ui/Modal';
 import Tabs from '@/components/ui/Tabs';
-import Dropdown from '@/components/ui/Dropdown';
+import Dropdown, { DropdownItem } from '@/components/ui/Dropdown';
 import Tooltip from '@/components/ui/Tooltip';
 import Skeleton from '@/components/ui/Skeleton';
 import { LoadingSpinner, EmptyState, ErrorState } from '@/components/common';
 import { VideoCard } from '@/components/video';
 import { SettingsItem } from '@/components/ui';
-import { Play, Heart, Settings, Search, ChevronDown, Copy, Check, Bell, User, Monitor, Sun, Moon } from 'lucide-react';
+import { Play, Heart, Settings, ChevronDown, Copy, Check, Bell, User, Moon } from 'lucide-react';
 
 // ============ Helper Components ============
 
@@ -98,7 +98,6 @@ export default function UIKitPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [toggleValue, setToggleValue] = useState(false);
     const [checkboxValue, setCheckboxValue] = useState(false);
-    const [inputValue, setInputValue] = useState('');
     const [activeTab, setActiveTab] = useState('tab1');
 
     // Only show in development
@@ -125,7 +124,7 @@ export default function UIKitPage() {
                     </p>
                     <div className="flex gap-2">
                         <Badge>v1.0</Badge>
-                        <Badge variant="success">15 Components</Badge>
+                        <Badge variant="count">15 Components</Badge>
                     </div>
                 </div>
 
@@ -188,7 +187,7 @@ export default function UIKitPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <Input label="Default" placeholder="Enter text..." />
                             <Input label="With Value" value="Hello World" onChange={() => { }} />
-                            <Input label="With Icon" placeholder="Search..." icon={<Search size={16} />} />
+                            <Input label="With Prefix" placeholder="Search..." />
                             <Input label="Error State" placeholder="Invalid" error="This field is required" />
                             <Input label="Disabled" placeholder="Cannot edit" disabled />
                         </div>
@@ -235,7 +234,7 @@ export default function UIKitPage() {
                         <SubSection title="States">
                             <Toggle checked={false} onChange={() => { }} label="Off" />
                             <Toggle checked={true} onChange={() => { }} label="On" />
-                            <Toggle checked={toggleValue} onChange={setToggleValue} label="Interactive" />
+                            <Toggle checked={toggleValue} onChange={(e) => setToggleValue(e.target.checked)} label="Interactive" />
                         </SubSection>
                     </Demo>
 
@@ -257,7 +256,7 @@ export default function UIKitPage() {
                     <Demo>
                         <SubSection title="Component Style">
                             <Checkbox checked={false} onChange={() => { }} label="Unchecked" />
-                            <Checkbox checked={checkboxValue} onChange={setCheckboxValue} label="Interactive" />
+                            <Checkbox checked={checkboxValue} onChange={(e) => setCheckboxValue(e.target.checked)} label="Interactive" />
                         </SubSection>
                     </Demo>
 
@@ -294,7 +293,7 @@ export default function UIKitPage() {
                                 description="Receive alerts when new videos are added."
                                 icon={<Bell size={20} />}
                             >
-                                <Toggle checked={toggleValue} onChange={setToggleValue} />
+                                <Toggle checked={toggleValue} onChange={(e) => setToggleValue(e.target.checked)} />
                             </SettingsItem>
 
                             <SettingsItem
@@ -343,9 +342,9 @@ export default function UIKitPage() {
                     <Demo>
                         <SubSection title="Variants">
                             <Badge>Default</Badge>
-                            <Badge variant="success">Success</Badge>
-                            <Badge variant="warning">Warning</Badge>
-                            <Badge variant="error">Error</Badge>
+                            <Badge variant="status">Status</Badge>
+                            <Badge variant="count">Count</Badge>
+                            <Badge variant="category" category="MV">Category</Badge>
                         </SubSection>
                     </Demo>
 
@@ -431,11 +430,11 @@ export default function UIKitPage() {
                     <Demo>
                         <Tabs
                             tabs={[
-                                { id: 'tab1', label: 'Overview' },
-                                { id: 'tab2', label: 'Settings' },
-                                { id: 'tab3', label: 'Advanced' },
+                                { id: 'tab1', label: 'Overview', content: <div>Overview content</div> },
+                                { id: 'tab2', label: 'Settings', content: <div>Settings content</div> },
+                                { id: 'tab3', label: 'Advanced', content: <div>Advanced content</div> },
                             ]}
-                            activeTab={activeTab}
+                            defaultTab={activeTab}
                             onChange={setActiveTab}
                         />
                         <div className="mt-4 p-4 bg-[var(--color-bg-tertiary)] rounded-lg">
@@ -493,12 +492,11 @@ export default function UIKitPage() {
                                     Menu <ChevronDown size={14} className="ml-2" />
                                 </Button>
                             }
-                            items={[
-                                { label: 'Edit', onClick: () => console.log('Edit') },
-                                { label: 'Duplicate', onClick: () => console.log('Duplicate') },
-                                { label: 'Delete', onClick: () => console.log('Delete') },
-                            ]}
-                        />
+                        >
+                            <DropdownItem onClick={() => console.log('Edit')}>Edit</DropdownItem>
+                            <DropdownItem onClick={() => console.log('Duplicate')}>Duplicate</DropdownItem>
+                            <DropdownItem onClick={() => console.log('Delete')}>Delete</DropdownItem>
+                        </Dropdown>
                     </Demo>
 
                     <PropsTable props={[

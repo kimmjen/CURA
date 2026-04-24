@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, BarChart2 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/common';

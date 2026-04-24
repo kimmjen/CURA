@@ -1,4 +1,3 @@
-import React from 'react';
 import { Play } from 'lucide-react';
 import Badge from '@/components/ui/Badge';
 import { useLanguage } from '@/contexts/LanguageContext';

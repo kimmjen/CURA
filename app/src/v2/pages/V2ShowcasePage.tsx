@@ -3,7 +3,7 @@ import ButtonV2 from '../components/ui/ButtonV2';
 import GlassCard from '../components/ui/GlassCard';
 import VideoCardV2 from '../components/video/VideoCardV2';
 import AnimatedNumber from '../components/ui/AnimatedNumber';
-import Skeleton, { SkeletonVideoCard } from '../components/ui/Skeleton';
+import { SkeletonVideoCard } from '../components/ui/Skeleton';
 
 // Clean, professional styles - 의미 있는 곳에만 애니메이션
 const v2Styles = `
@@ -133,7 +133,9 @@ export default function V2ShowcasePage() {
         styleElement.innerHTML = v2Styles;
         document.head.appendChild(styleElement);
         setTimeout(() => setMounted(true), 50);
-        return () => document.head.removeChild(styleElement);
+        return () => {
+            document.head.removeChild(styleElement);
+        };
     }, []);
 
     if (!mounted) {

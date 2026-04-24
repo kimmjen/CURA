@@ -1,4 +1,3 @@
-import type { cn } from '@/utils/utils';
 import { formatDuration } from '@/utils/format';
 import Badge from '@/components/ui/Badge';
 import Card from '@/components/ui/Card';

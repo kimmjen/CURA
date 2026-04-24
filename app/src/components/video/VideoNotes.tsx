@@ -1,4 +1,3 @@
-import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Pencil, Clock, Trash2, Plus } from 'lucide-react';
 import Button from '@/components/ui/Button';

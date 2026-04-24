@@ -43,7 +43,7 @@ export const watchHistoryApi = {
      * POST /api/watch-history
      * 시청 기록 저장
      */
-    save: async (userId: string, data: SaveWatchHistoryRequest): Promise<WatchHistoryResponse> => {
+    save: async (_userId: string,data: SaveWatchHistoryRequest): Promise<WatchHistoryResponse> => {
         const { data: authData } = await supabase.auth.getSession();
         const token = authData.session?.access_token;
         if (!token) throw new Error('Authentication required');
@@ -64,7 +64,7 @@ export const watchHistoryApi = {
      * GET /api/watch-history?page=0&size=20
      * 최근 시청 목록 조회
      */
-    getRecent: async (userId: string, page = 0, size = 20): Promise<Page<WatchHistoryResponse>> => {
+    getRecent: async (_userId: string,page = 0, size = 20): Promise<Page<WatchHistoryResponse>> => {
         const { data: authData } = await supabase.auth.getSession();
         const token = authData.session?.access_token;
         if (!token) throw new Error('Authentication required');
@@ -84,7 +84,7 @@ export const watchHistoryApi = {
      * GET /api/watch-history/badge-count
      * 새 비디오 배지 카운트
      */
-    getBadgeCount: async (userId: string): Promise<number> => {
+    getBadgeCount: async (_userId: string): Promise<number> => {
         const { data: authData } = await supabase.auth.getSession();
         const token = authData.session?.access_token;
         if (!token) throw new Error('Authentication required');
@@ -100,7 +100,7 @@ export const watchHistoryApi = {
      * DELETE /api/watch-history/{videoId}
      * 특정 시청 기록 삭제
      */
-    delete: async (userId: string, videoId: number): Promise<void> => {
+    delete: async (_userId: string,videoId: number): Promise<void> => {
         const { data: authData } = await supabase.auth.getSession();
         const token = authData.session?.access_token;
         if (!token) throw new Error('Authentication required');
@@ -116,7 +116,7 @@ export const watchHistoryApi = {
      * DELETE /api/watch-history
      * 전체 시청 기록 삭제
      */
-    clearAll: async (userId: string): Promise<void> => {
+    clearAll: async (_userId: string): Promise<void> => {
         const { data: authData } = await supabase.auth.getSession();
         const token = authData.session?.access_token;
         if (!token) throw new Error('Authentication required');

@@ -1,5 +1,4 @@
-export { default as Sidebar, SidebarSection, SidebarItem } from './Sidebar';
-export type { SidebarProps } from './Sidebar';
+export { default as Sidebar } from './Sidebar';
 
 export { default as SearchBar } from './SearchBar';
 export type { SearchBarProps } from './SearchBar';

@@ -1,4 +1,5 @@
-import { useEffect, useRef, ReactNode, HTMLAttributes } from 'react';
+import { useEffect, useRef } from 'react';
+import type { ReactNode, HTMLAttributes } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/utils/utils';
 

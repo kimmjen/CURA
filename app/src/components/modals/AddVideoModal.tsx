@@ -15,7 +15,7 @@ export default function AddVideoModal({
     open,
     onClose,
     onAdd,
-    collectionId,
+    collectionId: _collectionId,
 }: AddVideoModalProps) {
     const [url, setUrl] = useState('');
     const [loading, setLoading] = useState(false);

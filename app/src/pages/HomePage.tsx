@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import VideoSection from '@/components/ui/VideoSection';
 import { VideoCard, HeroBanner } from '@/components/video';
 import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
-import { LoadingSpinner, PageHeader } from '@/components/common';
+import { LoadingSpinner } from '@/components/common';
 import { useCollections, api } from '@/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { Video, VideoCategory } from '@/types/video';
@@ -71,12 +70,6 @@ export default function HomePage() {
     };
 
     // Memoize expensive derived data
-    const recentVideos = useMemo(() => {
-        return [...allVideos]
-            .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
-            .slice(0, 12);
-    }, [allVideos]);
-
     const popularVideos = useMemo(() => {
         return [...allVideos]
             .filter(v => v.viewCount)

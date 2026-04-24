@@ -113,7 +113,7 @@ const PlayerPage: React.FC = () => {
         }
     };
 
-    const saveProgress = async (isCompleted: boolean = false) => {
+    const saveProgress = async (_isCompleted: boolean = false) => {
         if (!user || !video || !playerRef.current) return;
         try {
             const currentTime = await playerRef.current.getCurrentTime();
@@ -151,6 +151,7 @@ const PlayerPage: React.FC = () => {
     }, [collectionVideosData, video, targetCollectionId, categoryVideos]);
 
     const handleNextVideo = () => {
+        if (!video) return;
         const currentIndex = queue.findIndex((v: Video) => v.id === video.id);
         if (currentIndex !== -1 && currentIndex < queue.length - 1) {
             const nextVideoId = queue[currentIndex + 1].id;
@@ -160,7 +161,9 @@ const PlayerPage: React.FC = () => {
         }
     };
 
-    const isNextAvailable = queue.findIndex((v: Video) => v.id === video.id) < queue.length - 1;
+    const isNextAvailable = video
+        ? queue.findIndex((v: Video) => v.id === video.id) < queue.length - 1
+        : false;
 
     if (isLoading) {
         return (
