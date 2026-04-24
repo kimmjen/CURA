@@ -6,12 +6,14 @@ import { api } from './client';
 
 /**
  * 모든 컬렉션 목록 조회
+ * 서버가 JWT에서 userId를 읽으므로 클라이언트 파라미터 불필요.
  */
 export function useCollections() {
     const { user } = useAuth();
     return useQuery({
         queryKey: ['collections', user?.id],
-        queryFn: () => api.getCollections({ userId: user?.id }),
+        queryFn: () => api.getCollections(),
+        enabled: !!user,
     });
 }
 
@@ -34,13 +36,12 @@ export function useCreateCollection() {
     const { user } = useAuth();
 
     return useMutation({
-        mutationFn: (data: any) => {
+        mutationFn: (data: Parameters<typeof api.createCollection>[0]) => {
             if (!user) throw new Error('User must be logged in to create a collection');
-            return api.createCollection({ ...data, userId: user.id });
+            return api.createCollection(data);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['collections'] });
-            // Also invalidate sidebar collections list
             queryClient.invalidateQueries({ queryKey: ['collections-infinite'] });
         },
     });
@@ -87,7 +88,7 @@ export function useDeleteCollection() {
  */
 export function useVideos(collectionId: number, params?: {
     page?: number;
-    size?: number;
+    pageSize?: number;
     sort?: string;
 }) {
     return useQuery({
@@ -153,20 +154,6 @@ export function useDeleteVideo() {
         mutationFn: api.deleteVideo,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['videos'] });
-        },
-    });
-}
-
-/**
- * 플레이리스트 가져오기
- */
-export function useImportPlaylist() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: api.importPlaylist,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['collections'] });
         },
     });
 }

@@ -3,31 +3,19 @@ import MainLayout from '@/components/layout/MainLayout';
 import Button from '@/components/ui/Button';
 import { CollectionCard } from '@/components/collection';
 import { VideoGrid } from '@/components/video';
-import { CreateCollectionModal, ImportPlaylistModal } from '@/components/modals';
+import { CreateCollectionModal } from '@/components/modals';
 import { EmptyState, LoadingSpinner } from '@/components/common';
-import { useCollections, useCreateCollection, useImportPlaylist } from '@/api';
+import { useCollections, useCreateCollection } from '@/api';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { Collection } from '@/types/video';
 
 export default function ManagementPage() {
     const { t } = useLanguage();
-    const [showImportPlaylist, setShowImportPlaylist] = useState(false);
     const [showCreateCollection, setShowCreateCollection] = useState(false);
 
     // React Query
     const { data: collections, isLoading, error } = useCollections();
     const createCollectionMutation = useCreateCollection();
-    const importPlaylistMutation = useImportPlaylist();
-
-    const handleImportPlaylist = async (url: string) => {
-        try {
-            await importPlaylistMutation.mutateAsync({ playlistUrl: url });
-            setShowImportPlaylist(false);
-        } catch (err) {
-            console.error('Failed to import playlist:', err);
-            throw err;
-        }
-    };
 
     const handleCreateCollection = async (data: any) => {
         try {
@@ -81,12 +69,6 @@ export default function ManagementPage() {
                         </svg>
                         {t('management.create_new')}
                     </Button>
-                    <Button variant="secondary" onClick={() => setShowImportPlaylist(true)}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        {t('management.import_playlist')}
-                    </Button>
                 </div>
 
                 {/* Collections Grid */}
@@ -105,12 +87,7 @@ export default function ManagementPage() {
                         title={t('management.empty_title')}
                         description={t('management.empty_desc')}
                         action={
-                            <div className="flex gap-2">
-                                <Button onClick={() => setShowCreateCollection(true)}>{t('management.create_new')}</Button>
-                                <Button variant="secondary" onClick={() => setShowImportPlaylist(true)}>
-                                    {t('management.import_playlist')}
-                                </Button>
-                            </div>
+                            <Button onClick={() => setShowCreateCollection(true)}>{t('management.create_new')}</Button>
                         }
                     />
                 )}
@@ -131,11 +108,6 @@ export default function ManagementPage() {
             </div>
 
             {/* Modals */}
-            <ImportPlaylistModal
-                open={showImportPlaylist}
-                onClose={() => setShowImportPlaylist(false)}
-                onImport={handleImportPlaylist}
-            />
             <CreateCollectionModal
                 open={showCreateCollection}
                 onClose={() => setShowCreateCollection(false)}

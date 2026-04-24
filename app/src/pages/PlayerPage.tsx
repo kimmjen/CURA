@@ -39,7 +39,7 @@ const PlayerPage: React.FC = () => {
     // Smart Category Mode logic
     const targetCollectionId = collectionId || 0;
     const { data: collectionVideosData, isLoading: isQueueLoading } = useVideos(targetCollectionId, {
-        size: 100,
+        pageSize: 100,
     });
 
     const { data: collections } = useCollections();
@@ -54,7 +54,7 @@ const PlayerPage: React.FC = () => {
             try {
                 const content = Array.isArray(collections) ? collections : (collections as any).content || [];
                 const promises = content.map((col: Collection) =>
-                    api.getVideos(col.id, { size: 50 }).catch(() => ({ videos: [] as Video[] }))
+                    api.getVideos(col.id, { pageSize: 50 }).catch(() => ({ videos: [] as Video[] }))
                 );
                 const results = await Promise.all(promises);
                 const allVideos = results.flatMap((r: any) => r.videos || []);

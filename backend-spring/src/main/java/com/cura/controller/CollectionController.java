@@ -1,22 +1,21 @@
 package com.cura.controller;
 
 import com.cura.dto.CollectionDto;
-import com.cura.dto.CommonDto;
 import com.cura.dto.VideoDto;
-import com.cura.dto.YouTubeDto;
 import com.cura.service.CollectionService;
 import com.cura.service.VideoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/collections")
 @RequiredArgsConstructor
@@ -31,8 +30,6 @@ public class CollectionController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         UUID userId = jwt != null ? UUID.fromString(jwt.getSubject()) : null;
-        System.out.println(
-                "[DEBUG] Getting collections - JWT: " + (jwt != null ? "present" : "NULL") + ", userId: " + userId);
         return ResponseEntity.ok(collectionService.getAllCollections(userId, page, size));
     }
 
@@ -40,9 +37,7 @@ public class CollectionController {
     public ResponseEntity<CollectionDto.Response> createCollection(
             @AuthenticationPrincipal Jwt jwt,
             @Valid @RequestBody CollectionDto.CreateRequest request) {
-        System.out.println("[DEBUG] Creating collection - JWT subject: " + (jwt != null ? jwt.getSubject() : "NULL"));
         UUID userId = UUID.fromString(jwt.getSubject());
-        System.out.println("[DEBUG] Creating collection - userId: " + userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(collectionService.createCollection(userId, request));
     }
 
@@ -86,15 +81,10 @@ public class CollectionController {
 
     @PostMapping("/claim")
     public ResponseEntity<Integer> claimLegacyCollections(@AuthenticationPrincipal Jwt jwt) {
-        try {
-            UUID userId = UUID.fromString(jwt.getSubject());
-            System.out.println("Claiming legacy collections for user: " + userId);
-            int count = collectionService.claimLegacyCollections(userId);
-            System.out.println("Claimed count: " + count);
-            return ResponseEntity.ok(count);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        UUID userId = UUID.fromString(jwt.getSubject());
+        log.info("Claiming legacy collections for user {}", userId);
+        int count = collectionService.claimLegacyCollections(userId);
+        log.info("Claimed {} legacy collections for user {}", count, userId);
+        return ResponseEntity.ok(count);
     }
 }

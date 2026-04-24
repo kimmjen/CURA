@@ -55,7 +55,7 @@ export default function CollectionDetailPage() {
         isFetchingNextPage,
         isLoading: videosLoading,
     } = useInfiniteVideos(collectionId, {
-        size: 20,
+        pageSize: 20,
         sort: sortBy,
         category: categoryFilter === 'ALL' ? undefined : categoryFilter,
     });

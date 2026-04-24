@@ -31,7 +31,7 @@ export default function HomePage() {
 
                 const videoPromises = collectionList.map(async (collection: any) => {
                     try {
-                        const result = await api.getVideos(collection.id, { size: 20 });
+                        const result = await api.getVideos(collection.id, { pageSize: 20 });
                         return result;
                     } catch (error) {
                         console.warn(`Failed to fetch videos for collection ${collection.id}:`, error);

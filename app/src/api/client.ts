@@ -10,10 +10,9 @@ export interface ApiResponse<T> {
 
 export interface PaginatedResponse<T> {
     videos: T[];
-    totalElements: number;
-    totalPages: number;
-    size: number;
-    number: number;
+    total: number;
+    page: number;
+    pageSize: number;
 }
 
 export const api = {
@@ -141,7 +140,7 @@ export const api = {
      */
     getVideos: async (collectionId: number, params?: {
         page?: number;
-        size?: number;
+        pageSize?: number;
         sort?: string;
     }): Promise<PaginatedResponse<Video>> => {
         const { data } = await supabase.auth.getSession();
@@ -151,7 +150,7 @@ export const api = {
 
         const query = new URLSearchParams();
         if (params?.page !== undefined) query.append('page', params.page.toString());
-        if (params?.size !== undefined) query.append('size', params.size.toString());
+        if (params?.pageSize !== undefined) query.append('pageSize', params.pageSize.toString());
         if (params?.sort) query.append('sort', params.sort);
 
         const url = `${API_BASE_URL}/api/collections/${collectionId}/videos${query.toString() ? '?' + query.toString() : ''}`;
@@ -282,30 +281,6 @@ export const api = {
             },
         });
         if (!response.ok) throw new Error('Failed to delete video');
-        return response.json();
-    },
-
-    /**
-     * POST /api/playlists/import
-     * YouTube 플레이리스트 전체 가져오기
-     */
-    importPlaylist: async (data: {
-        playlistUrl: string;
-        collectionId?: number;
-    }) => {
-        const { data: authData } = await supabase.auth.getSession();
-        const token = authData.session?.access_token;
-        if (!token) throw new Error('Authentication required');
-
-        const response = await fetch(`${API_BASE_URL}/api/playlists/import`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(data),
-        });
-        if (!response.ok) throw new Error('Failed to import playlist');
         return response.json();
     },
 

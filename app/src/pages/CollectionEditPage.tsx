@@ -59,7 +59,7 @@ export default function CollectionEditPage() {
         const fetchVideos = async () => {
             setIsLoadingVideos(true);
             try {
-                const response = await api.getVideos(collectionId, { size: 100 });
+                const response = await api.getVideos(collectionId, { pageSize: 100 });
                 setVideos(response.videos || []);
             } catch (err) {
                 console.error('Failed to fetch videos:', err);
@@ -103,7 +103,7 @@ export default function CollectionEditPage() {
             });
 
             // Refresh videos
-            const response = await api.getVideos(collectionId, { size: 100 });
+            const response = await api.getVideos(collectionId, { pageSize: 100 });
             setVideos(response.videos || []);
             setYoutubeUrl('');
         } catch (err) {
