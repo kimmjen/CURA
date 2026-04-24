@@ -11,6 +11,7 @@ import com.cura.repository.CollectionRepository;
 import com.cura.repository.VideoRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class VideoService {
@@ -211,7 +213,7 @@ public class VideoService {
                 // Small delay to be gentle on API quota if needed, keeping it sync for now
             } catch (Exception e) {
                 // Log and continue, don't stop the whole process
-                System.err.println("Failed to refresh video " + video.getId() + ": " + e.getMessage());
+                log.warn("Failed to refresh video {}: {}", video.getId(), e.getMessage());
             }
         }
     }
@@ -262,7 +264,7 @@ public class VideoService {
                 createVideo(collectionId, request);
                 addedCount++;
             } catch (Exception e) {
-                System.err.println("Failed to sync video " + videoId + ": " + e.getMessage());
+                log.warn("Failed to sync video {}: {}", videoId, e.getMessage());
             }
         }
         return addedCount;
@@ -295,7 +297,7 @@ public class VideoService {
                 createVideo(collectionId, request);
                 addedCount++;
             } catch (Exception e) {
-                System.err.println("Failed to import video " + videoId + ": " + e.getMessage());
+                log.warn("Failed to import video {} from channel: {}", videoId, e.getMessage());
             }
         }
         return addedCount;
@@ -328,7 +330,7 @@ public class VideoService {
                 createVideo(collectionId, request);
                 addedCount++;
             } catch (Exception e) {
-                System.err.println("Failed to import video " + videoId + ": " + e.getMessage());
+                log.warn("Failed to import video {} from playlist: {}", videoId, e.getMessage());
             }
         }
         return addedCount;

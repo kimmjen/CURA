@@ -78,4 +78,7 @@ supabase:
     bucket: ${SUPABASE_STORAGE_BUCKET:cura-images}
 
 cors:
-  allowed-origins: "*"
+  # Comma-separated origins. In prod, set CORS_ORIGINS to the
+  # actual frontend domain(s). Wildcards are not permitted because
+  # the filter below sets allowCredentials=true.
+  allowed-origins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000}
