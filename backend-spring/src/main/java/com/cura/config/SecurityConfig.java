@@ -3,6 +3,7 @@ package com.cura.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -14,10 +15,17 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    private final Environment environment;
+
+    public SecurityConfig(Environment environment) {
+        this.environment = environment;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -62,6 +70,22 @@ public class SecurityConfig {
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .toList();
+
+        // Fail fast if production is about to serve with dev origins.
+        // Without this guard a missing CORS_ORIGINS env var silently
+        // falls back to localhost and every real browser gets CORS
+        // errors — a hard-to-diagnose outage instead of a boot failure.
+        Set<String> activeProfiles = Set.of(environment.getActiveProfiles());
+        if (activeProfiles.contains("production") || activeProfiles.contains("prod")) {
+            boolean hasDevOrigin = origins.stream().anyMatch(o ->
+                    o.contains("localhost") || o.contains("127.0.0.1"));
+            if (origins.isEmpty() || hasDevOrigin) {
+                throw new IllegalStateException(
+                        "cors.allowed-origins contains dev/empty entries in a production profile: "
+                                + origins + ". Set CORS_ORIGINS to the real frontend domain(s).");
+            }
+        }
+
         configuration.setAllowedOriginPatterns(origins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
