@@ -115,29 +115,28 @@ the problem compounds if ignored.
   page redirects to `/login` via `ProtectedRoute`, so the stricter
   default is at least internally consistent.
 
-### CORS origin list ships as localhost by default
+### ~~CORS origin list ships as localhost by default~~ — guard added in 8ac15e8
 
-- `application.yml` now reads `${CORS_ORIGINS:http://localhost:5173,
-  http://localhost:3000}` (see 41a4f1b). In prod this is overridden
-  by the `CORS_ORIGINS` env var.
-- Risk: if `backend-spring/.env` is forgotten or shadowed, prod
-  serves with the localhost default and real browsers get CORS
-  errors — *not* a data leak, but a silent outage.
-- **Done looks like**: add a fail-fast check in
-  `SecurityConfig.corsConfigurationSource()` that rejects
-  `localhost` origins when `spring.profiles.active=production`.
+- `SecurityConfig` now throws at bean construction when the active
+  profile is `production`/`prod` and `cors.allowed-origins` is empty
+  or still contains `localhost` / `127.0.0.1`.
+- Dev behaviour unchanged; a missing `CORS_ORIGINS` env in prod now
+  fails the health check instead of serving with localhost.
 
-### `app/.env` carries a service-role JWT
+### `app/.env` carries a service-role JWT — **still requires key rotation**
 
 - `app/.env` (gitignored) contains
   `VITE_SUPABASE_ANON_KEY=eyJ…service_role…`. The token body is
   `"role":"service_role"`, not `"anon"`.
-- Every browser that loads the app receives it as a frontend env
-  var. Service-role keys bypass RLS.
-- **Done looks like**: regenerate the anon key in Supabase, put it
-  in `app/.env`, rotate the exposed service-role key (whoever has
-  it can read/write any table). The file being gitignored doesn't
-  remove that risk because the bundle itself ships the value.
+- **Mitigated in de1597f**: `src/config/supabase.ts` now decodes the
+  JWT at module init and throws in production builds (warns in dev)
+  if the role claim is `service_role`. Prevents recurrence, but does
+  **not** fix the already-leaked token — anyone who has fetched the
+  bundle while the key was live can keep using it.
+- **Still to do**: regenerate the anon key in Supabase, replace
+  `app/.env` with it, and rotate / revoke the service-role key in
+  the Supabase dashboard. I cannot do this from code — it requires
+  dashboard access.
 
 ---
 
