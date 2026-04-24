@@ -79,24 +79,25 @@ the problem compounds if ignored.
 
 ## Tests
 
-### Zero test coverage across all three codebases
+### Test coverage — scaffolding landed in 4a4d8e9, real coverage still thin
 
-- `backend-spring/src/test/java/com/cura/` exists but is empty.
-  `build.gradle` has `spring-boot-starter-test` / Lombok test
-  dependencies wired but nothing runs.
-- `backend/` (FastAPI) has no pytest setup. A leftover
-  `test_connection.py` at the package root just prints DB info.
-- `app/` has vitest + playwright + Storybook test addons
-  installed, but `package.json` has no `"test"` script. The
-  `test.projects` block in `vite.config.ts` references
-  `@storybook/addon-vitest` but nothing drives it.
-- **Done looks like**:
-  - Spring: one end-to-end `@SpringBootTest` per controller
-    covering happy + auth failure, plus service unit tests for
-    `VideoService.autoCategorize` and YouTube URL extractors.
-  - app/: add `"test": "vitest"` script, at minimum a smoke test
-    for `@/api/client` URL construction and pagination shape.
-  - CI: run both on every PR.
+- Infra now works end-to-end:
+  - `pnpm test` runs the `unit` vitest project (10 tests over
+    `src/utils/format.ts`).
+  - `./gradlew test` runs `YouTubeServiceTest` (10 tests over the
+    URL-extraction helpers).
+- Still missing:
+  - Spring: a `@SpringBootTest` per controller covering happy +
+    auth failure; service-layer tests for `VideoService.autoCategorize`
+    (currently `private` — make it package-private to test) and the
+    import-channel / import-playlist flows (needs YouTube API
+    mocking).
+  - app/: smoke test for `@/api/client` URL construction and
+    pagination shape (needs a `fetch` stub + Supabase session mock).
+    Right now the suite only touches pure utils.
+  - FastAPI: no pytest at all. `backend/test_connection.py` is a
+    DB-ping script, not a test.
+  - CI: no workflow runs either test command yet.
 
 ---
 
