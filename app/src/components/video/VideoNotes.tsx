@@ -1,9 +1,13 @@
-import ReactMarkdown from 'react-markdown';
+import { lazy, Suspense } from 'react';
 import { Pencil, Clock, Trash2, Plus } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/common';
 import { useLanguage } from '@/contexts/LanguageContext';
 import type { VideoNote } from '@/api/client';
+
+// Markdown renderer is ~90 kB gzipped with deps. Only the Notes tab
+// needs it — load on demand instead of shipping in the player chunk.
+const ReactMarkdown = lazy(() => import('react-markdown'));
 
 interface VideoNotesProps {
     notes: VideoNote[];
@@ -72,7 +76,9 @@ export default function VideoNotes({
                                 </button>
                             </div>
                             <div className="prose prose-sm prose-invert max-w-none text-[var(--color-text-primary)]">
-                                <ReactMarkdown>{note.content}</ReactMarkdown>
+                                <Suspense fallback={<span className="whitespace-pre-wrap text-sm">{note.content}</span>}>
+                                    <ReactMarkdown>{note.content}</ReactMarkdown>
+                                </Suspense>
                             </div>
                             <div className="mt-2 text-[10px] text-[var(--color-text-tertiary)]">
                                 {new Date(note.createdAt).toLocaleString()}
