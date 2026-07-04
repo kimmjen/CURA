@@ -16,8 +16,8 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 # Build for production
-# This will use .env.production automatically
-RUN pnpm build
+# Explicitly use .env.production
+RUN pnpm build --mode production
 
 # Stage 2: Serve
 FROM nginx:alpine

@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import { useInView } from 'react-intersection-observer';
 import { useParams } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { CollectionHeader } from '../features/collection/components/CollectionHeader';
 import { CollectionHeaderSkeleton } from '../features/collection/components/CollectionHeaderSkeleton';
 import { VideoThreadCardSkeleton } from '../features/feed/components/VideoThreadCardSkeleton';
 import { clsx } from 'clsx';
 import { LayoutGrid, List, Filter } from 'lucide-react';
+import { Button } from '@/components/ui';
 
 import { CollectionInfoSection } from '../features/collection/components/CollectionInfoSection';
 import { CollectionVideoGrid } from '../features/collection/components/CollectionVideoGrid';
@@ -43,7 +45,7 @@ export const CollectionPage: React.FC = () => {
     } = useInfiniteQuery({
         queryKey: ['videos', id],
         queryFn: async ({ pageParam = 0 }) => {
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/collections/${id}/videos?skip=${pageParam}&limit=20`);
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/collections/${id}/videos?skip=${pageParam}&limit=20`);
             if (!response.ok) throw new Error('Failed to fetch videos');
             return response.json();
         },
@@ -91,6 +93,24 @@ export const CollectionPage: React.FC = () => {
 
     return (
         <div className="pb-32">
+            {/* SEO Meta Tags */}
+            <Helmet>
+                <title>{collection.title} - CURA</title>
+                <meta name="description" content={collection.description || `Watch ${collection.title} videos on CURA`} />
+
+                {/* Open Graph (Facebook, LinkedIn) */}
+                <meta property="og:title" content={`${collection.title} - CURA`} />
+                <meta property="og:description" content={collection.description || `Watch ${collection.title} videos on CURA`} />
+                <meta property="og:image" content={collection.cover_image_url} />
+                <meta property="og:type" content="website" />
+
+                {/* Twitter Card */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={`${collection.title} - CURA`} />
+                <meta name="twitter:description" content={collection.description || `Watch ${collection.title} videos on CURA`} />
+                <meta name="twitter:image" content={collection.cover_image_url} />
+            </Helmet>
+
             {/* Hero Section */}
             <CollectionHeader
                 title={collection.title}
@@ -120,20 +140,26 @@ export const CollectionPage: React.FC = () => {
                     {/* Right: View Options (Desktop only) */}
                     {activeTab !== 'INFO' && activeTab !== 'SHORTS' && (
                         <div className="hidden md:flex items-center gap-4 text-gray-500">
-                            <button className="hover:text-white transition"><Filter className="w-5 h-5" /></button>
+                            <Button variant="ghost" size="icon" className="hover:text-white transition">
+                                <Filter className="w-5 h-5" />
+                            </Button>
                             <div className="w-[1px] h-4 bg-gray-800" />
-                            <button
+                            <Button
                                 onClick={() => setViewMode('LIST')}
+                                variant="ghost"
+                                size="icon"
                                 className={clsx("transition", viewMode === 'LIST' ? "text-white" : "hover:text-white")}
                             >
                                 <List className="w-5 h-5" />
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={() => setViewMode('GRID')}
+                                variant="ghost"
+                                size="icon"
                                 className={clsx("transition", viewMode === 'GRID' ? "text-white" : "hover:text-white")}
                             >
                                 <LayoutGrid className="w-5 h-5" />
-                            </button>
+                            </Button>
                         </div>
                     )}
                 </div>
@@ -176,15 +202,16 @@ export const CollectionPage: React.FC = () => {
                     </>
                 )}
             </main>
-        </div>
+        </div >
     );
 };
 
 const TabButton = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
-    <button
+    <Button
         onClick={onClick}
+        variant="ghost"
         className={clsx(
-            "text-xs font-bold tracking-widest transition-colors relative h-full flex items-center whitespace-nowrap uppercase",
+            "text-xs font-bold tracking-widest transition-colors relative h-full flex items-center whitespace-nowrap uppercase rounded-none px-4",
             active ? "text-white" : "text-gray-500 hover:text-gray-300"
         )}
     >
@@ -192,5 +219,5 @@ const TabButton = ({ label, active, onClick }: { label: string; active: boolean;
         {active && (
             <div className="absolute bottom-0 left-0 w-full h-[2px] bg-white" />
         )}
-    </button>
+    </Button>
 );

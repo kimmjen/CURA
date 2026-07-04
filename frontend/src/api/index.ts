@@ -1,11 +1,15 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 // --- Collections ---
 
 export const getCollections = async (): Promise<any[]> => {
     const res = await fetch(`${API_BASE_URL}/api/collections`);
     if (!res.ok) throw new Error('Failed to fetch collections');
-    return res.json();
+    const data = await res.json();
+    // Support both formats:
+    // - Spring Boot (better): { collections: [...] }
+    // - FastAPI (legacy): [...]
+    return data.collections || data;
 };
 
 export const getCollection = async (id: string): Promise<any> => {

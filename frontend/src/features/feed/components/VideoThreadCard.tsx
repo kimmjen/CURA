@@ -21,6 +21,7 @@ interface VideoThreadCardProps {
     curatorName?: string;
     curatorAvatar?: string;
     variant?: 'full' | 'compact';
+    onPlay?: () => void;
 }
 
 export const VideoThreadCard: React.FC<VideoThreadCardProps> = ({
@@ -28,6 +29,7 @@ export const VideoThreadCard: React.FC<VideoThreadCardProps> = ({
     curatorName = "Gongwon Official",
     curatorAvatar = "https://via.placeholder.com/40",
     variant = 'full',
+    onPlay,
 }) => {
     const isCompact = variant === 'compact';
 
@@ -65,7 +67,13 @@ export const VideoThreadCard: React.FC<VideoThreadCardProps> = ({
                 {!isPlaying ? (
                     /* Thumbnail & Play Button Overlay */
                     <div
-                        onClick={() => setIsPlaying(true)}
+                        onClick={() => {
+                            if (onPlay) {
+                                onPlay();
+                            } else {
+                                setIsPlaying(true);
+                            }
+                        }}
                         className="absolute inset-0 cursor-pointer group/video"
                     >
                         <img

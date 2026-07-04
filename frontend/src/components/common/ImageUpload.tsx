@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { API_BASE_URL } from '../../api';
 
 interface ImageUploadProps {
     value?: string;
@@ -22,7 +24,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, class
 
         try {
             console.log('Starting upload...');
-            const response = await fetch('http://localhost:8000/api/upload/', {
+            const response = await fetch(`${API_BASE_URL}/api/upload/`, {
                 method: 'POST',
                 body: formData,
             });
@@ -31,10 +33,11 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({ value, onChange, class
 
             const data = await response.json();
             console.log('Upload successful:', data.url);
+            toast.success('Image uploaded successfully');
             onChange(data.url);
         } catch (error) {
             console.error('Upload error:', error);
-            alert('Failed to upload image');
+            toast.error('Failed to upload image');
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) {

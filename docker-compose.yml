@@ -11,6 +11,8 @@ services:
     image: ${DOCKER_USERNAME}/cura-backend:latest
     ports:
       - "8001:8000" # Changed from 8000:8000 to avoid conflict
+    environment:
+      - ENV=production
     env_file:
       - ./backend/.env.production
     volumes:

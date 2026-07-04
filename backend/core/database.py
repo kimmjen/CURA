@@ -65,6 +65,10 @@ async def get_session() -> AsyncSession:
         yield session
 
 
+# Alias for compatibility
+get_db = get_session
+
+
 @asynccontextmanager
 async def get_session_context() -> AsyncSession:
     """

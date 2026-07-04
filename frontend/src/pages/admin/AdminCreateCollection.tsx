@@ -4,6 +4,8 @@ import { ImageUpload } from '../../components/common/ImageUpload';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { API_BASE_URL } from '../../api';
 
 import { AdminLayout } from '../../components/layout/AdminLayout';
 
@@ -25,7 +27,7 @@ export const AdminCreateCollection: React.FC = () => {
 
     const createCollectionMutation = useMutation({
         mutationFn: async (data: CreateCollectionForm) => {
-            const response = await fetch('http://localhost:8000/api/collections/', {
+            const response = await fetch(`${API_BASE_URL}/api/collections/`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
@@ -34,10 +36,15 @@ export const AdminCreateCollection: React.FC = () => {
             return response.json();
         },
         onSuccess: () => {
+            toast.success('Collection created successfully!');
             queryClient.invalidateQueries({ queryKey: ['collections'] });
             navigate('/admin');
         },
-        onError: () => setError('Failed to create collection.'),
+        onError: (error) => {
+            console.error(error);
+            toast.error('Failed to create collection');
+            setError('Failed to create collection.');
+        },
     });
 
     return (
@@ -58,11 +65,11 @@ export const AdminCreateCollection: React.FC = () => {
                 <form onSubmit={handleSubmit((data) => createCollectionMutation.mutate(data))} className="space-y-6 bg-gray-900 rounded-xl border border-white/5 p-8">
                     <div>
                         <label className="block text-sm font-medium text-gray-400 mb-2">Title</label>
-                        <input {...register('title', { required: true })} className="w-full bg-black border border-gray-700 rounded p-3 focus:border-white outline-none transition" placeholder="e.g. TAEYEON" />
+                        <input {...register('title')} className="w-full bg-black border border-gray-700 rounded p-3 focus:border-white outline-none transition" placeholder="e.g. TAEYEON" />
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-400 mb-2">Description</label>
-                        <textarea {...register('description', { required: true })} className="w-full bg-black border border-gray-700 rounded p-3 focus:border-white outline-none transition" rows={4} placeholder="Collection description..." />
+                        <textarea {...register('description')} className="w-full bg-black border border-gray-700 rounded p-3 focus:border-white outline-none transition" rows={4} placeholder="Collection description..." />
                     </div>
 
                     <div>
@@ -74,7 +81,7 @@ export const AdminCreateCollection: React.FC = () => {
                                 placeholder="Upload Cover Image"
                             />
                             <input
-                                {...register('cover_image_url', { required: true })}
+                                {...register('cover_image_url')}
                                 value={watch('cover_image_url') || ''}
                                 className="w-full bg-black border border-gray-700 rounded p-3 focus:border-white outline-none transition text-sm text-gray-500"
                                 placeholder="Or enter URL directly..."
@@ -113,7 +120,7 @@ export const AdminCreateCollection: React.FC = () => {
                         </select>
                     </div>
                     <div className="pt-4">
-                        <button type="submit" disabled={isSubmitting} className="w-full bg-white text-black py-3 rounded font-bold hover:bg-gray-200 transition disabled:opacity-50">
+                        <button type="submit" disabled={isSubmitting} className="w-full bg-white text-black py-3 rounded font-bold hover:bg-gray-200 focus:bg-gray-200 focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-900 transition disabled:opacity-50 outline-none cursor-pointer">
                             {isSubmitting ? 'Creating...' : 'Create Collection'}
                         </button>
                     </div>

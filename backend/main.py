@@ -202,3 +202,11 @@ async def health_check():
 app.include_router(collections.router, prefix="/api")
 app.include_router(videos.router, prefix="/api")
 app.include_router(upload.router, prefix="/api")
+
+# Import search router after other routers
+from api.routers import search
+app.include_router(search.router, prefix="/api")
+
+# Import stats router
+from api.routers import stats
+app.include_router(stats.router, prefix="/api")

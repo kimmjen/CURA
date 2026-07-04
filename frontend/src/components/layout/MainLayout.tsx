@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Disc, ShieldCheck, ChevronDown } from 'lucide-react';
+import { Menu, X, Disc, ShieldCheck, ChevronDown, Search } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useQuery } from '@tanstack/react-query';
 
@@ -43,7 +43,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     "fixed top-0 left-0 w-full z-50 transition-all duration-300 border-b",
                     isScrolled || isMobileMenuOpen
                         ? "bg-black/80 backdrop-blur-md border-white/10 py-4"
-                        : "bg-transparent border-transparent py-6"
+                        : "bg-transparent border-transparent py-6",
+                    location.pathname === '/search' && "hidden"
                 )}
             >
                 <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
@@ -58,6 +59,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center gap-8">
                         <NavLink to="/" label="Home" active={location.pathname === '/'} />
+                        <NavLink to="/search" label="Search" active={location.pathname === '/search'} />
 
                         {/* Collections Dropdown */}
                         <div className="relative group">
@@ -108,6 +110,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 >
                     <nav className="flex flex-col p-6 gap-6">
                         <MobileNavLink to="/" label="Home" active={location.pathname === '/'} />
+                        <MobileNavLink to="/search" label="Search" active={location.pathname === '/search'} />
 
                         <div>
                             <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Collections</p>

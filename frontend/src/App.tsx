@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { CollectionPage } from './pages/CollectionPage';
+import { SearchPage } from './pages/SearchPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminCollections } from './pages/admin/AdminCollections';
 import { AdminCreateCollection } from './pages/admin/AdminCreateCollection';
@@ -19,6 +20,13 @@ function App() {
         <Route path="/collection/:id" element={
           <MainLayout>
             <CollectionPage />
+          </MainLayout>
+        } />
+
+        {/* Search Route */}
+        <Route path="/search" element={
+          <MainLayout>
+            <SearchPage />
           </MainLayout>
         } />
 

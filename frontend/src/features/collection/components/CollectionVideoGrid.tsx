@@ -9,9 +9,10 @@ interface CollectionVideoGridProps {
     activeTab: string;
     viewMode: 'LIST' | 'GRID';
     collection: any;
+    onVideoClick?: (video: any) => void;
 }
 
-export const CollectionVideoGrid: React.FC<CollectionVideoGridProps> = ({ videos, activeTab, viewMode, collection }) => {
+export const CollectionVideoGrid: React.FC<CollectionVideoGridProps> = ({ videos, activeTab, viewMode, collection, onVideoClick }) => {
     const [selectedShort, setSelectedShort] = useState<any>(null);
 
     // Special Layout for Shorts
@@ -70,6 +71,7 @@ export const CollectionVideoGrid: React.FC<CollectionVideoGridProps> = ({ videos
                     curatorName={collection.title + " Official"}
                     curatorAvatar={collection.profile_image_url || "https://via.placeholder.com/150"}
                     variant={viewMode === 'GRID' ? 'compact' : 'full'}
+                    onPlay={onVideoClick ? () => onVideoClick(video) : undefined}
                 />
             ))}
 

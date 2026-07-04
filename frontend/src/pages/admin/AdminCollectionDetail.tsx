@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { ArrowLeft, Trash2, Plus, Youtube, Settings, Download, ListVideo, Edit, Play } from 'lucide-react';
+import { ArrowLeft, Trash2, Plus, Youtube, Settings, Download, ListVideo, Edit, Play, CheckSquare, Square } from 'lucide-react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { EditVideoModal } from '@/components/admin/EditVideoModal';
 import { ImportModal } from '@/components/admin/ImportModal';
-import { Pagination } from '@/components/ui';
+import { Pagination, Input, Button, Card, Select, Textarea } from '@/components/ui';
 import clsx from 'clsx';
 import * as api from '@/api';
 
@@ -44,6 +44,9 @@ export const AdminCollectionDetail: React.FC = () => {
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [addProgress, setAddProgress] = useState<string | null>(null);
 
+    // Batch selection state
+    const [selectedVideos, setSelectedVideos] = useState<number[]>([]);
+
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 50;
@@ -62,7 +65,7 @@ export const AdminCollectionDetail: React.FC = () => {
             const skip = (currentPage - 1) * itemsPerPage;
             const categoryParam = filterCategory !== 'ALL' ? `&category=${filterCategory}` : '';
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/collections/${id}/videos?skip=${skip}&limit=${itemsPerPage}${categoryParam}`
+                `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/api/collections/${id}/videos?skip=${skip}&limit=${itemsPerPage}${categoryParam}`
             );
             if (!response.ok) throw new Error('Failed to fetch videos');
             return response.json();
@@ -120,6 +123,46 @@ export const AdminCollectionDetail: React.FC = () => {
         },
         onError: () => setMessage({ type: 'error', text: 'Failed to delete videos.' }),
     });
+
+    // Batch delete selected videos
+    const batchDeleteMutation = useMutation({
+        mutationFn: async (videoIds: number[]) => {
+            await Promise.all(videoIds.map(videoId => api.deleteVideo(videoId)));
+        },
+        onSuccess: () => {
+            setMessage({ type: 'success', text: `Deleted ${selectedVideos.length} videos successfully!` });
+            setSelectedVideos([]);
+            queryClient.invalidateQueries({ queryKey: ['videos', id] });
+        },
+        onError: () => setMessage({ type: 'error', text: 'Failed to delete selected videos.' }),
+    });
+
+    // Toggle video selection
+    const toggleVideoSelection = (videoId: number) => {
+        setSelectedVideos(prev =>
+            prev.includes(videoId)
+                ? prev.filter(id => id !== videoId)
+                : [...prev, videoId]
+        );
+    };
+
+    // Toggle all videos on current page
+    const toggleAllVideos = () => {
+        const currentVideoIds = videos.map((v: any) => v.id);
+        if (selectedVideos.length === currentVideoIds.length) {
+            setSelectedVideos([]);
+        } else {
+            setSelectedVideos(currentVideoIds);
+        }
+    };
+
+    // Handle batch delete
+    const handleBatchDelete = () => {
+        if (selectedVideos.length === 0) return;
+        if (confirm(`Are you sure you want to delete ${selectedVideos.length} selected videos?`)) {
+            batchDeleteMutation.mutate(selectedVideos);
+        }
+    };
 
     // --- Bulk Add Videos ---
     const { register: registerAdd, handleSubmit: handleSubmitAdd, reset: resetAdd } = useForm<BulkAddForm>({
@@ -208,58 +251,66 @@ export const AdminCollectionDetail: React.FC = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                     {/* Left Column: Edit Form */}
                     <div className="lg:col-span-1 space-y-8">
-                        <div className="bg-gray-900 rounded-xl border border-white/5 p-6">
+                        <Card className="p-6 bg-gray-900">
                             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
                                 <Settings className="w-5 h-5 text-gray-400" /> Settings
                             </h2>
                             <form onSubmit={handleSubmitUpdate((data) => updateMutation.mutate(data))} className="space-y-4">
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Title</label>
-                                    <input {...registerUpdate('title')} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-white outline-none transition" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Description</label>
-                                    <textarea {...registerUpdate('description')} rows={3} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-white outline-none transition" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cover Image URL</label>
-                                    <input {...registerUpdate('cover_image_url')} className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-white outline-none transition" />
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Official Channel Link</label>
-                                    <input {...registerUpdate('official_link')} placeholder="https://youtube.com/@channel" className="w-full bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-white outline-none transition" />
-                                </div>
-                                <button type="submit" disabled={updateMutation.isPending} className="w-full bg-white text-black font-bold py-3 rounded-lg hover:bg-gray-200 transition">
-                                    {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-                                </button>
+                                <Input
+                                    label="Title"
+                                    {...registerUpdate('title')}
+                                />
+                                <Textarea
+                                    label="Description"
+                                    {...registerUpdate('description')}
+                                    rows={3}
+                                />
+                                <Input
+                                    label="Cover Image URL"
+                                    {...registerUpdate('cover_image_url')}
+                                />
+                                <Input
+                                    label="Official Channel Link"
+                                    {...registerUpdate('official_link')}
+                                    placeholder="https://youtube.com/@channel"
+                                />
+                                <Button
+                                    type="submit"
+                                    disabled={updateMutation.isPending}
+                                    loading={updateMutation.isPending}
+                                    className="w-full"
+                                >
+                                    Save Changes
+                                </Button>
                             </form>
-                        </div>
+                        </Card>
 
                         {/* Import Tools */}
-                        <div className="bg-gray-900 rounded-xl border border-white/5 p-6">
+                        <Card className="p-6 bg-gray-900">
                             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
                                 <Download className="w-5 h-5 text-gray-400" /> Import Tools
                             </h2>
                             <div className="space-y-3">
-                                <button
+                                <Button
                                     onClick={() => setIsImportModalOpen(true)}
-                                    className="w-full bg-gray-800 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition flex items-center justify-center gap-2"
+                                    variant="secondary"
+                                    className="w-full"
                                 >
                                     <Youtube className="w-5 h-5 text-red-500" /> Auto-Import from Channel
-                                </button>
+                                </Button>
                                 <p className="text-xs text-gray-500 text-center">
                                     Automatically fetches videos from a YouTube channel.
                                 </p>
                             </div>
-                        </div>
+                        </Card>
 
                         {/* Danger Zone */}
-                        <div className="bg-gray-900 rounded-xl border border-red-900/30 p-6">
+                        <Card className="p-6 bg-gray-900 border-red-900/30">
                             <h2 className="text-lg font-bold mb-2 text-red-400">Danger Zone</h2>
                             <p className="text-xs text-gray-500 mb-4">
                                 Permanently delete this collection and all videos. This action cannot be undone.
                             </p>
-                            <button
+                            <Button
                                 onClick={() => {
                                     if (confirm(
                                         "⚠️ WARNING: This will permanently delete this collection and ALL videos in it.\n\n" +
@@ -269,47 +320,54 @@ export const AdminCollectionDetail: React.FC = () => {
                                         deleteCollectionMutation.mutate();
                                     }
                                 }}
-                                className="w-full bg-red-900/50 hover:bg-red-900 text-red-200 font-bold py-3 rounded-lg transition border border-red-700"
+                                variant="danger"
+                                className="w-full"
                             >
                                 Delete Collection
-                            </button>
-                        </div>
+                            </Button>
+                        </Card>
                     </div>
 
                     {/* Right Column: Video Management */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Quick Add */}
-                        <div className="bg-gray-900 rounded-xl border border-white/5 p-6">
+                        <Card className="p-6 bg-gray-900">
                             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
                                 <Plus className="w-5 h-5 text-gray-400" /> Quick Add Video
                             </h2>
                             <form onSubmit={handleSubmitAdd(handleBulkAdd)} className="flex gap-2">
-                                <input
-                                    {...registerAdd(`videos.0.url` as const)}
-                                    placeholder="Paste YouTube URL here..."
-                                    className="flex-1 bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-white outline-none transition"
-                                />
-                                <select
-                                    {...registerAdd(`videos.0.category` as const)}
-                                    className="w-32 bg-black border border-gray-800 rounded-lg p-3 text-white focus:border-white outline-none transition"
+                                <div className="flex-1">
+                                    <Input
+                                        {...registerAdd(`videos.0.url` as const)}
+                                        placeholder="Paste YouTube URL here..."
+                                    />
+                                </div>
+                                <div className="w-32">
+                                    <Select
+                                        {...registerAdd(`videos.0.category` as const)}
+                                    >
+                                        <option value="MV">MV</option>
+                                        <option value="LIVE">LIVE</option>
+                                        <option value="FANCAM">FANCAM</option>
+                                        <option value="SHORTS">SHORTS</option>
+                                        <option value="INTERVIEW">TALK</option>
+                                        <option value="BEHIND">BEHIND</option>
+                                        <option value="VLOG">VLOG</option>
+                                        <option value="ETC">ETC</option>
+                                    </Select>
+                                </div>
+                                <Button
+                                    type="submit"
+                                    disabled={!!addProgress}
+                                    variant="accent"
                                 >
-                                    <option value="MV">MV</option>
-                                    <option value="LIVE">LIVE</option>
-                                    <option value="FANCAM">FANCAM</option>
-                                    <option value="SHORTS">SHORTS</option>
-                                    <option value="INTERVIEW">TALK</option>
-                                    <option value="BEHIND">BEHIND</option>
-                                    <option value="VLOG">VLOG</option>
-                                    <option value="ETC">ETC</option>
-                                </select>
-                                <button type="submit" disabled={!!addProgress} className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 rounded-lg transition">
                                     Add
-                                </button>
+                                </Button>
                             </form>
-                        </div>
+                        </Card>
 
                         {/* Video List */}
-                        <div className="bg-gray-900 rounded-xl border border-white/5 overflow-hidden">
+                        <Card className="p-0 bg-gray-900 overflow-hidden">
                             <div className="p-6 border-b border-white/5 flex flex-col gap-4">
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-lg font-bold flex items-center gap-2">
@@ -317,43 +375,93 @@ export const AdminCollectionDetail: React.FC = () => {
                                         <span className="text-sm font-normal text-gray-500 ml-2">
                                             ({totalVideos} total)
                                         </span>
+                                        {selectedVideos.length > 0 && (
+                                            <span className="text-sm font-bold text-blue-400 ml-2">
+                                                {selectedVideos.length} selected
+                                            </span>
+                                        )}
                                     </h2>
-                                    {totalVideos > 0 && (
-                                        <button
-                                            onClick={() => {
-                                                if (confirm("WARNING: This will delete ALL videos in this collection. This action cannot be undone. Are you sure?")) {
-                                                    deleteAllMutation.mutate();
-                                                }
-                                            }}
-                                            className="text-xs text-red-400 hover:text-red-300 hover:underline flex items-center gap-1"
-                                        >
-                                            <Trash2 className="w-3 h-3" /> Delete All Videos
-                                        </button>
-                                    )}
+                                    <div className="flex items-center gap-3">
+                                        {selectedVideos.length > 0 && (
+                                            <Button
+                                                onClick={handleBatchDelete}
+                                                disabled={batchDeleteMutation.isPending}
+                                                variant="danger"
+                                                size="sm"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                {batchDeleteMutation.isPending ? 'Deleting...' : `Delete ${selectedVideos.length} Selected`}
+                                            </Button>
+                                        )}
+                                        {totalVideos > 0 && (
+                                            <Button
+                                                onClick={() => {
+                                                    if (confirm("WARNING: This will delete ALL videos in this collection. This action cannot be undone. Are you sure?")) {
+                                                        deleteAllMutation.mutate();
+                                                    }
+                                                }}
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                                            >
+                                                <Trash2 className="w-3 h-3" /> Delete All
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
 
-                                {/* Category Filter Tabs */}
-                                <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
-                                    {['ALL', 'MV', 'LIVE', 'FANCAM', 'SHORTS', 'INTERVIEW', 'BEHIND', 'VLOG', 'ETC'].map((cat) => (
-                                        <button
-                                            key={cat}
-                                            onClick={() => setFilterCategory(cat)}
-                                            className={clsx(
-                                                "px-3 py-1.5 rounded-full text-xs font-bold transition whitespace-nowrap",
-                                                filterCategory === cat
-                                                    ? "bg-white text-black"
-                                                    : "bg-black border border-gray-700 text-gray-400 hover:border-white hover:text-white"
-                                            )}
+                                {/* Category Filter Tabs & Select All */}
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar flex-1">
+                                        {['ALL', 'MV', 'LIVE', 'FANCAM', 'SHORTS', 'INTERVIEW', 'BEHIND', 'VLOG', 'ETC'].map((cat) => (
+                                            <Button
+                                                key={cat}
+                                                variant={filterCategory === cat ? 'primary' : 'ghost'}
+                                                size="sm"
+                                                className={clsx(
+                                                    "rounded-full text-xs font-bold transition whitespace-nowrap",
+                                                    filterCategory !== cat && "text-gray-400 border border-gray-700 hover:border-white hover:text-white"
+                                                )}
+                                                onClick={() => setFilterCategory(cat)}
+                                            >
+                                                {cat}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    {videos?.length > 0 && (
+                                        <Button
+                                            onClick={toggleAllVideos}
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-gray-400 hover:text-white"
                                         >
-                                            {cat}
-                                        </button>
-                                    ))}
+                                            {selectedVideos.length === videos.length ? (
+                                                <CheckSquare className="w-4 h-4 mr-1.5" />
+                                            ) : (
+                                                <Square className="w-4 h-4 mr-1.5" />
+                                            )}
+                                            Select All
+                                        </Button>
+                                    )}
                                 </div>
                             </div>
 
                             <div className="divide-y divide-white/5">
                                 {videos?.map((video: any) => (
                                     <div key={video.id} className="p-4 flex gap-4 hover:bg-white/5 transition group">
+                                        {/* Checkbox */}
+                                        <Button
+                                            onClick={() => toggleVideoSelection(video.id)}
+                                            variant="ghost"
+                                            size="sm"
+                                            className="self-center text-gray-600 hover:text-white"
+                                        >
+                                            {selectedVideos.includes(video.id) ? (
+                                                <CheckSquare className="w-5 h-5 text-blue-400" />
+                                            ) : (
+                                                <Square className="w-5 h-5" />
+                                            )}
+                                        </Button>
                                         <div className="w-32 aspect-video bg-black rounded overflow-hidden flex-shrink-0 relative border border-white/10 group-hover:border-white/30 transition">
                                             <img src={video.thumbnail_url} alt={video.title} className="w-full h-full object-cover" />
                                             <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-black/80 backdrop-blur rounded text-[10px] font-bold text-white border border-white/10">
@@ -379,25 +487,32 @@ export const AdminCollectionDetail: React.FC = () => {
                                             <h3 className="font-bold text-white text-sm truncate">{video.title}</h3>
                                             <p className="text-xs text-gray-500 truncate mt-0.5">{video.channel_name}</p>
                                             <div className="flex items-center gap-4 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button onClick={() => setEditingVideo(video)} className="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1">
+                                                <Button
+                                                    onClick={() => setEditingVideo(video)}
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-blue-400 hover:text-blue-300 h-auto p-0"
+                                                >
                                                     <Edit className="w-3 h-3" /> Edit
-                                                </button>
+                                                </Button>
                                                 <span className="text-xs text-gray-600">|</span>
                                                 <span className="text-xs text-gray-500 font-mono">
                                                     {formatDuration(video.duration_seconds)}
                                                 </span>
                                             </div>
                                         </div>
-                                        <button
+                                        <Button
                                             onClick={() => {
                                                 if (confirm('Are you sure you want to delete this video?')) {
                                                     deleteVideoMutation.mutate(video.id);
                                                 }
                                             }}
-                                            className="self-center p-2 text-gray-600 hover:text-red-500 transition opacity-0 group-hover:opacity-100"
+                                            variant="ghost"
+                                            size="sm"
+                                            className="self-center text-gray-600 hover:text-red-500 opacity-0 group-hover:opacity-100"
                                         >
                                             <Trash2 className="w-4 h-4" />
-                                        </button>
+                                        </Button>
                                     </div>
                                 ))}
                                 {videos?.length === 0 && (
@@ -417,7 +532,7 @@ export const AdminCollectionDetail: React.FC = () => {
                                     />
                                 </div>
                             )}
-                        </div>
+                        </Card>
                     </div>
                 </div>
             </div>
